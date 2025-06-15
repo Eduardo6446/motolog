@@ -11,8 +11,8 @@
                 </div>
 
                 <!-- Add Motorcycle Form -->
-                <form action="#" method="POST" class="p-6 space-y-6 bg-gray-800 rounded-xl">
-                    
+                <form action="{% url 'motoadd' %}" method="POST" class="p-6 space-y-6 bg-gray-800 rounded-xl">
+                    {% csrf_token %}
                     <!-- Form Fields Grid -->
                     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                         <!-- Marca -->
@@ -57,7 +57,7 @@
                                         <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">Click para subir</span> o arrastra y suelta</p>
                                         <p class="text-xs text-gray-500">SVG, PNG, JPG (MAX. 800x400px)</p>
                                     </div>
-                                    <input id="photo-upload" name="photo-upload" type="file" class="hidden">
+                                    <input id="photo-upload" name="photo" type="file" class="hidden">
                                 </label>
                             </div> 
                         </div>

@@ -17,26 +17,61 @@
                     - Shows registered motorcycles.
                     - Is responsive and adapts to screen size.
                 -->
+                {% if motorcycles %}
+
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                    {% for motorcycle in motorcycles %}
                     <!-- Active Motorcycle Card -->
                     <a href="{% url 'motodetails' moto_id=1 %}" class="no-underline">
+                        {% if motorcycle.is_active %}
                         <div class="flex flex-col overflow-hidden transition-transform duration-200 bg-gray-800 border-2 border-orange-400 rounded-xl hover:-translate-y-1">
                         <div class="relative">
-                            <img src="https://placehold.co/400x300/111827/4b5563?text=Honda+CB190R" 
-                                 alt="Honda CB190R" 
+                            {% if motorcycle.photo %}
+                                <!--<img src="{{ motorcycle.photo.url }}" 
+                                     alt="{{ motorcycle.make }} {{ motorcycle.model }}" 
+                                     class="object-cover w-full h-32">}-->
+
+                                     
+                            <img src="https://placehold.co/400x300/111827/4b5563?text= {{ motorcycle.make }} {{ motorcycle.model }}" 
+                                 alt="{{ motorcycle.make }} {{ motorcycle.model }}" 
                                  class="object-cover w-full h-32">
+                            {% else %}
+                            <img src="https://placehold.co/400x300/111827/4b5563?text= {{ motorcycle.make }} {{ motorcycle.model }}" 
+                                 alt="{{ motorcycle.make }} {{ motorcycle.model }}" 
+                                 class="object-cover w-full h-32">
+                            {% endif %}
+
                             <div class="absolute top-0 left-0 px-3 py-1 text-xs font-bold bg-orange-400 rounded-br-lg text-gray-900">
                                 Active
                             </div>
+                            
                         </div>
                         <div class="p-4">
-                            <p class="text-sm text-gray-400">Honda</p>
-                            <h4 class="font-bold">CB190R (2023)</h4>
+                            <p class="text-sm text-gray-400">{{ motorcycle.make }}</p>
+                            <h4 class="font-bold">{{ motorcycle.model }} ({{ motorcycle.year }})</h4>
                         </div>
                     </div>
                     </a>
+                    {% else %}
+                    <!-- Inactive Motorcycle Card -->
+                    <div class="flex flex-col overflow-hidden bg-gray-800 border-2 border-gray-600 rounded-xl">
+                        <div class="relative">
+                            <img src="https://placehold.co/400x300/111827/4b5563?text= {{ motorcycle.make }} {{ motorcycle.model }}" 
+                                 alt="{{ motorcycle.make }} {{ motorcycle.model }}" 
+                                 class="object-cover w-full h-32">
+                            <div class="absolute top-0 left-0 px-3 py-1 text-xs font-bold bg-gray-600 rounded-br-lg text-gray-300">
+                                Inactive
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <p class="text-sm text-gray-400">{{ motorcycle.make }}</p>
+                            <h4 class="font-bold">{{ motorcycle.model }} ({{ motorcycle.year }})</h4>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
                 </div>
-
+                {% else %}
                 <!--
                     EMPTY STATE:
                     - This section should be shown with conditional logic
@@ -54,6 +89,7 @@
                         <span>Add my first motorcycle</span>
                     </button>
                 </div>
+                {% endif %}
 
             </div>
 
