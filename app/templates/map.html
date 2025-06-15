@@ -1,0 +1,75 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="p-4 mx-auto max-w-7xl sm:p-6 lg:p-8">
+                <!-- Header -->
+                <div class="pb-6 mb-6 border-b border-gray-700">
+                    <h2 class="text-3xl font-bold">Talleres Cercanos</h2>
+                     <p class="text-gray-400">Encuentra servicios de mantenimiento cerca de ti.</p>
+                </div>
+                
+                <!-- Layout Grid for Map and List -->
+                <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
+                    
+                    <!-- Map Column -->
+                    <div class="lg:col-span-2">
+                        <div class="relative w-full overflow-hidden bg-gray-800 rounded-xl h-96 lg:h-full">
+                             <img src="https://i.imgur.com/3Z69yF3.png" alt="Mapa estático de talleres en Managua" class="object-cover w-full h-full">
+                             <div class="absolute inset-0 bg-black/20"></div>
+                             <div class="absolute top-4 left-4">
+                                 <input type="text" placeholder="Buscar taller o dirección..." class="w-full max-w-sm px-4 py-2 text-white bg-gray-900/80 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400">
+                             </div>
+                        </div>
+                    </div>
+
+                    <!-- List Column -->
+                    <div class="lg:col-span-1">
+                        <div class="space-y-4">
+                            <h3 class="text-xl font-bold">Talleres encontrados (3)</h3>
+                            
+                            <!-- Workshop Card 1 -->
+                            <div class="p-4 transition-all duration-200 bg-gray-800 rounded-xl hover:bg-gray-700 hover:shadow-lg">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="font-bold">Taller de Motos "El Rápido"</h4>
+                                    <span class="px-2 py-1 text-xs font-medium text-green-300 bg-green-500/20 rounded-full">Abierto</span>
+                                </div>
+                                <p class="text-sm text-gray-400">De la rotonda El Periodista, 2c. al sur.</p>
+                                <div class="flex items-center justify-between mt-3">
+                                    <span class="text-sm font-medium text-gray-300">Aprox. 1.2 km</span>
+                                    <a href="#" class="px-3 py-1 text-sm font-bold text-gray-900 bg-orange-400 rounded-lg hover:bg-orange-500">Ver Detalles</a>
+                                </div>
+                            </div>
+                            
+                            <!-- Workshop Card 2 -->
+                            <div class="p-4 transition-all duration-200 bg-gray-800 rounded-xl hover:bg-gray-700 hover:shadow-lg">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="font-bold">MotoServicios Express</h4>
+                                    <span class="px-2 py-1 text-xs font-medium text-green-300 bg-green-500/20 rounded-full">Abierto</span>
+                                </div>
+                                <p class="text-sm text-gray-400">Semáforos de Villa Fontana, 1c. al lago.</p>
+                                <div class="flex items-center justify-between mt-3">
+                                    <span class="text-sm font-medium text-gray-300">Aprox. 2.5 km</span>
+                                     <a href="#" class="px-3 py-1 text-sm font-bold text-gray-900 bg-orange-400 rounded-lg hover:bg-orange-500">Ver Detalles</a>
+                                </div>
+                            </div>
+
+                            <!-- Workshop Card 3 -->
+                            <div class="p-4 transition-all duration-200 bg-gray-800 rounded-xl hover:bg-gray-700 hover:shadow-lg">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="font-bold">Central de Repuestos</h4>
+                                    <span class="px-2 py-1 text-xs font-medium text-red-400 bg-red-500/20 rounded-full">Cerrado</span>
+                                </div>
+                                <p class="text-sm text-gray-400">Frente al Mercado Roberto Huembes.</p>
+                                <div class="flex items-center justify-between mt-3">
+                                    <span class="text-sm font-medium text-gray-300">Aprox. 4.1 km</span>
+                                     <a href="#" class="px-3 py-1 text-sm font-bold text-gray-900 bg-orange-400 rounded-lg hover:bg-orange-500">Ver Detalles</a>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+{% endblock %}

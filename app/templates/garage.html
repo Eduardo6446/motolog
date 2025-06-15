@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+            <div class="p-4 mx-auto max-w-7xl sm:p-6 lg:p-8">
+                <!-- Header -->
+                <div class="flex flex-col items-center justify-between pb-6 mb-6 border-b border-gray-700 sm:flex-row">
+                    <h2 class="text-3xl font-bold">My Garage</h2>
+                    <a href="{% url 'motoadd' %}" class="flex items-center justify-center w-full gap-2 px-4 py-2 mt-4 text-base font-bold text-center text-gray-900 transition-colors duration-200 bg-orange-400 border-2 border-orange-400 rounded-lg sm:mt-0 sm:w-auto hover:bg-orange-500">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                        <span>Add New Motorcycle</span>
+                    </a>
+                </div>
+
+                <!-- 
+                    MOTORCYCLE GRID: 
+                    - Shows registered motorcycles.
+                    - Is responsive and adapts to screen size.
+                -->
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                    <!-- Active Motorcycle Card -->
+                    <a href="{% url 'motodetails' moto_id=1 %}" class="no-underline">
+                        <div class="flex flex-col overflow-hidden transition-transform duration-200 bg-gray-800 border-2 border-orange-400 rounded-xl hover:-translate-y-1">
+                        <div class="relative">
+                            <img src="https://placehold.co/400x300/111827/4b5563?text=Honda+CB190R" 
+                                 alt="Honda CB190R" 
+                                 class="object-cover w-full h-32">
+                            <div class="absolute top-0 left-0 px-3 py-1 text-xs font-bold bg-orange-400 rounded-br-lg text-gray-900">
+                                Active
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <p class="text-sm text-gray-400">Honda</p>
+                            <h4 class="font-bold">CB190R (2023)</h4>
+                        </div>
+                    </div>
+                    </a>
+                </div>
+
+                <!--
+                    EMPTY STATE:
+                    - This section should be shown with conditional logic
+                      when there are no registered motorcycles.
+                    - For demonstration, it's included here.
+                -->
+                <div class="py-16 mt-8 text-center bg-gray-800 rounded-xl">
+                    <div class="flex justify-center mb-4">
+                        <svg class="w-16 h-16 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold">Your garage is empty</h3>
+                    <p class="max-w-md mx-auto mt-2 text-gray-400">Register your motorcycle to start managing its maintenance and receive alerts.</p>
+                     <button class="flex items-center justify-center gap-2 px-4 py-2 mx-auto mt-6 text-base font-bold text-center text-gray-900 transition-colors duration-200 bg-orange-400 border-2 border-orange-400 rounded-lg hover:bg-orange-500">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                        <span>Add my first motorcycle</span>
+                    </button>
+                </div>
+
+            </div>
+
+{% endblock %}
