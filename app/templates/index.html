@@ -19,7 +19,7 @@
                     <div class="flex flex-col gap-6">
                         <div class="p-4 bg-gray-800 rounded-xl">
                             <h3 class="text-xl font-bold">Próximo Mantenimiento</h3>
-                            <p class="text-sm text-gray-400">Alerta programada</p>
+                            <p class="text-sm text-gray-400">{{ maintenance_reminders.next_service_date }}</p>
                         </div>
 
                         <!-- Maintenance Card -->
@@ -37,7 +37,7 @@
                             </div>
                             <div class="p-4">
                                 <p class="text-sm text-gray-400">Próximo servicio programado</p>
-                                <p class="text-2xl font-bold text-orange-400">en 850 km</p>
+                                <p class="text-2xl font-bold text-orange-400">{{ maintenance_reminders }}</p>
                             </div>
                         </div>
                     </div>
@@ -64,7 +64,7 @@
                                         </div>
                                         <span class="font-medium text-gray-300">Último Servicio</span>
                                     </div>
-                                    <span class="font-bold text-white">15 de Abril, 2025</span>
+                                    <span class="font-bold text-white">{{ maintenance_logs.last.date }}</span>
                                 </div>
                             </div>
                         </div>
@@ -74,9 +74,11 @@
                              <button class="w-full px-4 py-3 text-base font-bold text-center text-orange-400 transition-colors duration-200 border-2 border-orange-400 rounded-lg hover:bg-orange-400 hover:text-gray-900">
                                 Buscar Talleres
                             </button>
-                             <button class="w-full px-4 py-3 text-base font-bold text-center text-gray-900 transition-colors duration-200 bg-orange-400 border-2 border-orange-400 rounded-lg hover:bg-orange-500">
+                            <a href="{% url 'maintenance_add' moto_id=motorcycles.id %}" class="block">
+                                 <button class="w-full px-4 py-3 text-base font-bold text-center text-gray-900 transition-colors duration-200 bg-orange-400 border-2 border-orange-400 rounded-lg hover:bg-orange-500">
                                 Registrar Mantenimiento
                             </button>
+                            </a>
                         </div>
                     </div>
                 </div>
