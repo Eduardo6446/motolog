@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uso de IA en la creación de las interfaces Figma del prototipo desarrollado</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Fondo suave */
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden; /* Evita el scroll horizontal */
+        }
+        .slide {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            box-sizing: border-box;
+            scroll-snap-align: start; /* Para un scroll tipo presentación */
+        }
+        .container-wrapper {
+            scroll-snap-type: y mandatory; /* Habilita el scroll snap */
+            overflow-y: scroll;
+            height: 100vh;
+        }
+        .text-shadow {
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-wrapper">
+        <!-- Diapositiva 1: Título -->
+        <section class="slide bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
+            <h1 class="text-5xl md:text-6xl lg:text-7xl font-extrabold mb-8 text-shadow rounded-lg p-4 bg-white bg-opacity-20 backdrop-blur-sm">
+                Uso de IA en el desarrollo del prototipo
+            </h1>
+            
+        </section>
+
+        <!-- Diapositiva 2: Introducción -->
+        <section class="slide bg-gray-100 text-gray-800">
+            <h2 class="text-4xl md:text-5xl font-bold mb-6 rounded-lg p-3 bg-blue-100">
+                ¿Qué es la IA en Diseño UX/UI?
+            </h2>
+            <div class="flex flex-col md:flex-row items-center justify-center gap-8 max-w-4xl mx-auto">
+                <p class="text-lg md:text-xl leading-relaxed rounded-lg p-4 bg-white shadow-lg">
+                    La Inteligencia Artificial está transformando la forma en que diseñamos. En el contexto de Figma, la IA permite automatizar tareas repetitivas, generar variaciones de diseño, analizar patrones de usuario y optimizar la experiencia de forma predictiva.
+                </p>
+                <img src="https://placehold.co/400x250/a7d9f7/000000?text=AI+en+Diseño" alt="Imagen de IA en Diseño UX/UI" class="rounded-xl shadow-2xl">
+            </div>
+            <p class="mt-8 text-sm text-gray-500">
+                [Image of AI in Design]
+            </p>
+        </section>
+
+        <!-- Diapositiva 3: Beneficios Clave -->
+        <section class="slide bg-blue-50 text-gray-800">
+            <h2 class="text-4xl md:text-5xl font-bold mb-8 rounded-lg p-3 bg-indigo-100">
+                Beneficios de Integrar IA en Figma
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                <div class="p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                    <h3 class="text-2xl font-semibold mb-4 text-blue-700">Velocidad y Eficiencia</h3>
+                    <p class="text-lg">Acelera el proceso de creación de prototipos al generar elementos de interfaz, flujos y componentes de manera automática.</p>
+                </div>
+                <div class="p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                    <h3 class="text-2xl font-semibold mb-4 text-blue-700">Consistencia Visual</h3>
+                    <p class="text-lg">Asegura la adherencia a las guías de estilo y componentes de diseño, reduciendo errores y manteniendo la cohesión.</p>
+                </div>
+                <div class="p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                    <h3 class="text-2xl font-semibold mb-4 text-blue-700">Experiencias Personalizadas</h3>
+                    <p class="text-lg">Permite la creación de interfaces adaptadas a las preferencias y comportamientos individuales de los usuarios.</p>
+                </div>
+            </div>
+            <img src="https://placehold.co/600x350/c0e9e4/000000?text=Beneficios+IA+Diseño" alt="Imagen de Beneficios de IA en Diseño" class="mt-10 rounded-xl shadow-2xl">
+            <p class="mt-4 text-sm text-gray-500">
+                [Image of Benefits of AI in Design]
+            </p>
+        </section>
+
+        <!-- Diapositiva 4: Herramientas y Métodos -->
+        <section class="slide bg-gray-50 text-gray-800">
+            <h2 class="text-4xl md:text-5xl font-bold mb-8 rounded-lg p-3 bg-purple-100">
+                Herramientas y Enfoques de IA Utilizados
+            </h2>
+            <div class="flex flex-col md:flex-row items-center justify-center gap-8 max-w-4xl mx-auto">
+                <ul class="text-left text-lg md:text-xl list-disc list-inside space-y-3 rounded-lg p-6 bg-white shadow-lg">
+                    <li>Generación de wireframes a partir de texto o bocetos.</li>
+                    <li>Auto-Layout inteligente para organizar componentes.</li>
+                    <li>Recomendación de paletas de colores y tipografías.</li>
+                    <li>Optimización de la disposición de elementos para mejor usabilidad.</li>
+                    <li>Generación de contenido de marcador de posición (texto, imágenes).</li>
+                </ul>
+                <img src="https://placehold.co/400x250/b3e0ff/000000?text=Herramientas+IA" alt="Imagen de Herramientas de IA" class="rounded-xl shadow-2xl">
+            </div>
+            <p class="mt-8 text-sm text-gray-500">
+                [Image of AI Tools]
+            </p>
+        </section>
+
+        <!-- Diapositiva 5: Aplicación en el Prototipo SARA -->
+        <section class="slide bg-blue-100 text-gray-800">
+            <h2 class="text-4xl md:text-5xl font-bold mb-8 rounded-lg p-3 bg-green-100">
+                La IA en SARA: Un Caso Práctico
+            </h2>
+            <div class="flex flex-col md:flex-row items-center justify-center gap-8 max-w-4xl mx-auto">
+                <p class="text-lg md:text-xl leading-relaxed rounded-lg p-4 bg-white shadow-lg">
+                    En el desarrollo del prototipo SARA, la IA facilitó la creación de interfaces intuitivas y consistentes para la gestión de expedientes. Desde la generación de formularios complejos hasta la organización de listas dinámicas, la IA optimizó el flujo de trabajo y la calidad visual.
+                </p>
+                <img src="https://placehold.co/400x250/9ad0c2/000000?text=Figma+SARA+UI" alt="Imagen de Figma UI del prototipo SARA" class="rounded-xl shadow-2xl">
+            </div>
+            <p class="mt-8 text-sm text-gray-500">
+                [Image of Figma UI of SARA Prototype]
+            </p>
+        </section>
+
+        <!-- Diapositiva 6: Conclusión y Futuro -->
+        <section class="slide bg-gradient-to-l from-green-500 to-teal-600 text-white">
+            <h2 class="text-5xl md:text-6xl font-extrabold mb-8 text-shadow rounded-lg p-4 bg-white bg-opacity-20 backdrop-blur-sm">
+                Conclusión y Futuro
+            </h2>
+            <p class="text-xl md:text-2xl leading-relaxed max-w-3xl rounded-lg p-4 bg-white bg-opacity-10 backdrop-blur-sm">
+                La integración de la IA en Figma no es solo una tendencia, sino una evolución en el diseño de interfaces. Promete flujos de trabajo más inteligentes, productos más centrados en el usuario y una mayor democratización del diseño. Estamos solo al principio de lo que la IA puede lograr en UX/UI.
+            </p>
+            <img src="https://placehold.co/400x250/66bb6a/000000?text=Futuro+IA+Diseño" alt="Imagen del Futuro de la IA en Diseño" class="mt-10 rounded-xl shadow-2xl">
+            <p class="mt-4 text-sm text-gray-200">
+                [Image of Future of AI in Design]
+            </p>
+        </section>
+    </div>
+</body>
+</html>
