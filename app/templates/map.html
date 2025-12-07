@@ -10,11 +10,8 @@
             <p class="text-gray-400">Explora talleres y registra tus aventuras.</p>
         </div>
         
-        <!-- Botón Escritorio:
-             Siempre tiene 'hidden' base para no salir en móvil.
-             JS le agregará 'sm:flex' solo cuando sea necesario en escritorio. 
-        -->
-        <button id="btn-add-trip-header" class="hidden px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-lg shadow-lg transition-all text-sm items-center gap-2">
+        <!-- Botón Escritorio -->
+        <button id="btn-add-trip-header" class="hidden sm:flex px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-lg shadow-lg transition-all text-sm items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
             Nueva Ruta
         </button>
@@ -23,19 +20,33 @@
     <!-- Grid Principal -->
     <div class="grid grid-cols-1 gap-8 lg:grid-cols-3 flex-1 h-full min-h-[600px]">
         
-        <!-- COLUMNA IZQUIERDA: MAPA (2/3) -->
+        <!-- COLUMNA IZQUIERDA: MAPA INTERACTIVO (2/3) -->
         <div class="lg:col-span-2 flex flex-col h-full">
-            <div class="relative w-full h-[60vh] lg:h-full overflow-hidden bg-gray-800 rounded-xl border border-gray-700 shadow-xl">
-                <!-- Google Maps Embed -->
+            <div class="relative w-full h-[60vh] lg:h-full overflow-hidden bg-gray-800 rounded-xl border border-gray-700 shadow-xl group">
+                <!-- Google Maps Embed Dinámico -->
+                <!-- ID agregado para controlarlo con JS -->
                 <iframe 
-                    src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d62402.13524674721!2d-86.25754593417967!3d12.136279641753177!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1ses!2sni!4v1700000000000!5m2!1ses!2sni" 
+                    id="map-frame"
+                    src="https://maps.google.com/maps?q=Managua,Nicaragua&t=&z=13&ie=UTF8&iwloc=&output=embed" 
                     width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" 
-                    class="absolute inset-0 w-full h-full filter grayscale-[20%] hover:grayscale-0 transition-all duration-500">
+                    class="absolute inset-0 w-full h-full filter grayscale-[20%] group-hover:grayscale-0 transition-all duration-500">
                 </iframe>
+                
+                <!-- Overlay de carga (Opcional, para feedback visual al cambiar) -->
+                <div id="map-loader" class="absolute inset-0 bg-gray-900 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+                </div>
                 
                 <!-- Buscador flotante -->
                 <div class="absolute top-4 left-4 right-4 sm:right-auto sm:w-80">
-                    <input type="text" placeholder="Buscar en el mapa..." class="w-full pl-4 pr-4 py-3 text-white bg-gray-900/90 backdrop-blur-sm border border-gray-600 rounded-lg shadow-lg focus:ring-2 focus:ring-orange-500 focus:outline-none">
+                    <div class="relative">
+                        <input type="text" id="workshop-search" onkeyup="filterWorkshops()" 
+                               placeholder="Buscar taller o dirección..." 
+                               class="w-full pl-10 pr-4 py-3 text-white bg-gray-900/90 backdrop-blur-sm border border-gray-600 rounded-lg shadow-lg focus:ring-2 focus:ring-orange-500 focus:outline-none transition-all placeholder-gray-400">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -55,41 +66,73 @@
 
             <!-- CONTENIDO TAB 1: TALLERES -->
             <div id="content-workshops" class="p-4 overflow-y-auto flex-1 space-y-4">
-                <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Cercanos a ti</h3>
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider">Cercanos a ti</h3>
+                    
+                    <!-- Filtro Simple -->
+                    <div class="relative">
+                        <button onclick="document.getElementById('filter-options').classList.toggle('hidden')" class="text-xs text-orange-400 hover:text-orange-300 flex items-center gap-1 font-bold">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                            Filtrar
+                        </button>
+                        <div id="filter-options" class="hidden absolute right-0 mt-2 w-32 bg-gray-700 rounded-lg shadow-xl z-20 border border-gray-600">
+                            <a href="#" onclick="filterStatus('all')" class="block px-4 py-2 text-xs text-white hover:bg-gray-600 rounded-t-lg">Todos</a>
+                            <a href="#" onclick="filterStatus('open')" class="block px-4 py-2 text-xs text-white hover:bg-gray-600 rounded-b-lg">Solo Abiertos</a>
+                        </div>
+                    </div>
+                </div>
                 
-                <!-- Card Taller 1 -->
-                <div class="p-4 bg-gray-700/40 rounded-xl border border-gray-600 hover:border-orange-500/50 transition-colors cursor-pointer group">
+                <!-- Workshop Card 1 -->
+                <div class="workshop-card p-4 bg-gray-700/40 rounded-xl border border-gray-600 hover:border-orange-500/50 transition-colors cursor-pointer group"
+                     data-name="Taller El Rápido" data-address="Rotonda El Periodista, Managua" data-status="open">
                     <div class="flex justify-between items-start">
                         <h4 class="font-bold text-white group-hover:text-orange-400">Taller El Rápido</h4>
-                        <span class="text-xs bg-green-500/20 text-green-300 px-2 py-0.5 rounded-full">Abierto</span>
+                        <span class="px-2 py-0.5 text-xs font-bold text-green-300 bg-green-500/20 rounded-full border border-green-500/30">Abierto</span>
                     </div>
                     <p class="text-xs text-gray-400 mt-1">Rotonda El Periodista, 2c sur.</p>
-                    <div class="mt-3 flex justify-between items-center">
-                        <span class="text-xs text-gray-300 font-bold">⭐ 4.5</span>
-                        <span class="text-xs text-gray-500">1.2 km</span>
+                    <div class="mt-3 flex justify-between items-center pt-3 border-t border-gray-600/50">
+                        <span class="text-xs text-gray-300 font-bold flex items-center gap-1">⭐ 4.5 <span class="font-normal text-gray-500">• 1.2 km</span></span>
+                        
+                        <!-- BOTÓN: VER EN MAPA -->
+                        <button onclick="locateOnMap('Rotonda El Periodista, Managua')" class="px-3 py-1.5 text-xs font-bold text-gray-900 bg-orange-400 rounded-lg hover:bg-orange-500 transition-colors flex items-center gap-1 shadow-md hover:shadow-orange-500/20">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            Ver en Mapa
+                        </button>
                     </div>
                 </div>
 
-                <!-- Card Taller 2 -->
-                <div class="p-4 bg-gray-700/40 rounded-xl border border-gray-600 hover:border-orange-500/50 transition-colors cursor-pointer group">
+                <!-- Workshop Card 2 -->
+                <div class="workshop-card p-4 bg-gray-700/40 rounded-xl border border-gray-600 hover:border-orange-500/50 transition-colors cursor-pointer group"
+                     data-name="MotoServicios Express" data-address="Villa Fontana, Managua" data-status="open">
                     <div class="flex justify-between items-start">
                         <h4 class="font-bold text-white group-hover:text-orange-400">MotoServicios Express</h4>
-                        <span class="text-xs bg-green-500/20 text-green-300 px-2 py-0.5 rounded-full">Abierto</span>
+                        <span class="px-2 py-0.5 text-xs font-bold text-green-300 bg-green-500/20 rounded-full border border-green-500/30">Abierto</span>
                     </div>
                     <p class="text-xs text-gray-400 mt-1">Villa Fontana, 1c lago.</p>
-                    <div class="mt-3 flex justify-between items-center">
-                        <span class="text-xs text-gray-300 font-bold">⭐ 4.8</span>
-                        <span class="text-xs text-gray-500">2.5 km</span>
+                    <div class="mt-3 flex justify-between items-center pt-3 border-t border-gray-600/50">
+                        <span class="text-xs text-gray-300 font-bold flex items-center gap-1">⭐ 4.8 <span class="font-normal text-gray-500">• 2.5 km</span></span>
+                        
+                        <button onclick="locateOnMap('Villa Fontana, Managua')" class="px-3 py-1.5 text-xs font-bold text-gray-900 bg-orange-400 rounded-lg hover:bg-orange-500 transition-colors flex items-center gap-1 shadow-md hover:shadow-orange-500/20">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            Ver en Mapa
+                        </button>
                     </div>
                 </div>
 
-                 <!-- Card Taller 3 -->
-                <div class="p-4 bg-gray-700/40 rounded-xl border border-gray-600 opacity-75">
+                 <!-- Workshop Card 3 -->
+                <div class="workshop-card p-4 bg-gray-700/40 rounded-xl border border-gray-600 opacity-75"
+                     data-name="Central de Repuestos" data-address="Mercado Roberto Huembes, Managua" data-status="closed">
                     <div class="flex justify-between items-start">
                         <h4 class="font-bold text-white">Central de Repuestos</h4>
-                        <span class="text-xs bg-red-500/20 text-red-300 px-2 py-0.5 rounded-full">Cerrado</span>
+                        <span class="px-2 py-0.5 text-xs font-bold text-red-300 bg-red-500/20 rounded-full border border-red-500/30">Cerrado</span>
                     </div>
                     <p class="text-xs text-gray-400 mt-1">Mercado Huembes.</p>
+                    <div class="mt-3 flex justify-between items-center pt-3 border-t border-gray-600/50">
+                        <span class="text-xs text-gray-500">4.1 km</span>
+                        <button disabled class="px-3 py-1.5 text-xs font-bold text-gray-500 bg-gray-800 rounded-lg cursor-not-allowed">
+                            Cerrado
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -128,7 +171,6 @@
                     {% else %}
                         <div class="text-center py-10 text-gray-500">
                             <p>No hay viajes registrados.</p>
-                            <!-- Este botón solo se muestra si la lista está vacía -->
                             <button id="btn-add-trip-empty" class="mt-2 text-orange-400 hover:underline text-sm">Registrar el primero</button>
                         </div>
                     {% endif %}
@@ -144,7 +186,6 @@
 </div>
 
 <!-- BOTÓN FLOTANTE (FAB) MÓVIL -->
-<!-- Inicia oculto (hidden). JS lo activará solo en la pestaña de viajes. sm:hidden asegura que nunca salga en PC -->
 <button id="btn-add-trip-fab" class="hidden fixed bottom-24 right-6 z-40 p-4 text-gray-900 bg-orange-500 rounded-full shadow-2xl sm:hidden hover:bg-orange-600 transition-transform hover:scale-110 focus:outline-none border-2 border-orange-400">
     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
 </button>
@@ -205,7 +246,65 @@
 </div>
 
 <script>
-    // Lógica de Pestañas
+    // --- NUEVO: FUNCIÓN PARA LOCALIZAR EN EL MAPA ---
+    function locateOnMap(address) {
+        const mapFrame = document.getElementById('map-frame');
+        const loader = document.getElementById('map-loader');
+        
+        // Efecto visual de carga
+        if (loader) {
+            loader.classList.remove('hidden');
+            loader.classList.remove('opacity-0');
+        }
+
+        // Construir URL de Embed sin API Key (Método compatible con búsquedas)
+        // Usamos encodeURIComponent para que los espacios y tildes no rompan la URL
+        const newSrc = `https://maps.google.com/maps?q=${encodeURIComponent(address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+        
+        mapFrame.src = newSrc;
+
+        // Ocultar loader cuando cargue (aprox)
+        setTimeout(() => {
+            if (loader) {
+                loader.classList.add('opacity-0');
+                setTimeout(() => loader.classList.add('hidden'), 300);
+            }
+        }, 1500);
+    }
+
+    // --- LÓGICA DE BÚSQUEDA Y FILTRADO ---
+    function filterWorkshops() {
+        const input = document.getElementById('workshop-search');
+        const filter = input.value.toLowerCase();
+        const cards = document.querySelectorAll('.workshop-card');
+
+        cards.forEach(card => {
+            const name = card.getAttribute('data-name').toLowerCase();
+            const address = card.getAttribute('data-address').toLowerCase();
+            
+            if (name.includes(filter) || address.includes(filter)) {
+                card.classList.remove('hidden');
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+    }
+
+    function filterStatus(status) {
+        const cards = document.querySelectorAll('.workshop-card');
+        document.getElementById('filter-options').classList.add('hidden'); // Cerrar dropdown
+        
+        cards.forEach(card => {
+            const cardStatus = card.getAttribute('data-status');
+            if (status === 'all' || cardStatus === status) {
+                card.classList.remove('hidden');
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+    }
+
+    // --- Lógica de Pestañas ---
     function switchTab(tab) {
         const contentW = document.getElementById('content-workshops');
         const contentT = document.getElementById('content-trips');
@@ -216,43 +315,33 @@
         const btnFab = document.getElementById('btn-add-trip-fab');
 
         if (tab === 'workshops') {
-            // MOSTRAR TALLERES
             contentW.classList.remove('hidden');
             contentT.classList.add('hidden');
             
-            // Estilos Tab
             btnW.classList.add('text-orange-400', 'border-b-2', 'border-orange-500', 'bg-gray-700/30');
             btnW.classList.remove('text-gray-400');
             btnT.classList.remove('text-orange-400', 'border-b-2', 'border-orange-500', 'bg-gray-700/30');
             btnT.classList.add('text-gray-400');
             
-            // OCULTAR BOTONES DE ACCIÓN
-            // Aseguramos que el botón de escritorio se oculta
             btnAdd.classList.remove('sm:flex'); 
             btnAdd.classList.add('hidden');     
-            
-            btnFab.classList.add('hidden'); // Ocultar FAB móvil
+            btnFab.classList.add('hidden'); 
 
         } else {
-            // MOSTRAR VIAJES
             contentW.classList.add('hidden');
             contentT.classList.remove('hidden');
             
-            // Estilos Tab
             btnT.classList.add('text-orange-400', 'border-b-2', 'border-orange-500', 'bg-gray-700/30');
             btnT.classList.remove('text-gray-400');
             btnW.classList.remove('text-orange-400', 'border-b-2', 'border-orange-500', 'bg-gray-700/30');
             btnW.classList.add('text-gray-400');
             
-            // MOSTRAR BOTONES DE ACCIÓN
-            // Escritorio: Mantenemos 'hidden' base y agregamos 'sm:flex' (solo visible en pantallas grandes)
             btnAdd.classList.add('sm:flex'); 
-            // Móvil: Quitamos 'hidden' (visible en pantallas pequeñas, sm:hidden lo oculta en grandes)
             btnFab.classList.remove('hidden'); 
         }
     }
 
-    // Lógica Modal
+    // --- Lógica Modal ---
     const modal = document.getElementById('trip-modal');
     const openBtn1 = document.getElementById('btn-add-trip-header');
     const openBtn2 = document.getElementById('btn-add-trip-empty');
@@ -269,7 +358,6 @@
     if(closeBtn) closeBtn.addEventListener('click', closeModal);
     if(cancelBtn) cancelBtn.addEventListener('click', closeModal);
     
-    // Cerrar si clic fuera del modal
     modal.addEventListener('click', (e) => {
         if(e.target === modal) closeModal();
     });
