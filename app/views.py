@@ -2,7 +2,8 @@ import requests
 import json
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.models import User
-from .models import MotoImage, Profile, Motorcycle, MaintenanceLog, MaintenanceReminder
+from django.db.models import Sum
+from .models import MotoImage, Profile, Motorcycle, MaintenanceLog, MaintenanceReminder, TripLog
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 
@@ -192,7 +193,56 @@ def garage(request):
     return render(request, 'garage.html', context)
 
 def map(request):
-    return render(request, 'map.html', {})
+    """
+    Vista de Mapa + Diario de Viajes (Integrados)
+    """
+    if 'user_id' not in request.session: return redirect('login')
+    user = User.objects.get(id=request.session['user_id'])
+    
+    # 1. Determinar moto activa (para los viajes)
+    selected_id = request.session.get('selected_moto_id')
+    motorcycles = Motorcycle.objects.filter(owner=user, is_active=True)
+    
+    if selected_id:
+        main_moto = motorcycles.filter(id=selected_id).first()
+    else:
+        main_moto = motorcycles.first()
+
+    # 2. Procesar Nuevo Viaje (POST desde el Modal en el Mapa)
+    if request.method == 'POST':
+        if not main_moto: return redirect('motoadd')
+        
+        TripLog.objects.create(
+            motorcycle=main_moto,
+            title=request.POST.get('title'),
+            date=request.POST.get('date'),
+            distance_km=int(request.POST.get('distance')),
+            terrain=request.POST.get('terrain'),
+            notes=request.POST.get('notes')
+        )
+        
+        if request.POST.get('update_odometer') == 'on':
+            main_moto.mileage += int(request.POST.get('distance'))
+            main_moto.save()
+            
+        return redirect('map') # Redirige a la misma vista
+
+    # 3. Cargar datos de viajes
+    trip_logs = []
+    total_km_trips = 0
+    if main_moto:
+        trip_logs = TripLog.objects.filter(motorcycle=main_moto)
+        total_data = trip_logs.aggregate(Sum('distance_km'))
+        total_km_trips = total_data['distance_km__sum'] or 0
+
+    context = {
+        'user': user,
+        'main_moto': main_moto,
+        'motorcycles': motorcycles,
+        'trips': trip_logs,
+        'total_km_trips': total_km_trips
+    }
+    return render(request, 'map.html', context)
 
 def toggle_moto_status(request, moto_id):
     if 'user_id' not in request.session: return redirect('login')
@@ -523,3 +573,4 @@ def change_password(request):
         user.save()
         return redirect('profile')
     return render(request, 'change_password.html')
+

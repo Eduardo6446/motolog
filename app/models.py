@@ -90,3 +90,25 @@ class MotoImage(models.Model):
     motorcycle = models.ForeignKey(Motorcycle, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to='moto_gallery/')
     created_at = models.DateTimeField(auto_now_add=True)
+
+class TripLog(models.Model):
+    TERRAIN_CHOICES = [
+        ('city', 'Ciudad (Tráfico)'),
+        ('highway', 'Carretera / Autopista'),
+        ('mixed', 'Mixto'),
+        ('offroad', 'Off-Road / Tierra'),
+    ]
+
+    motorcycle = models.ForeignKey(Motorcycle, on_delete=models.CASCADE, related_name='trips')
+    title = models.CharField(max_length=200, verbose_name="Título del Viaje") # Ej: "Ruta a Granada"
+    date = models.DateField(default=timezone.now)
+    distance_km = models.IntegerField(verbose_name="Distancia Recorrida (km)")
+    terrain = models.CharField(max_length=20, choices=TERRAIN_CHOICES, default='mixed')
+    notes = models.TextField(blank=True, null=True)
+    
+    # Para ordenar del más reciente al más antiguo
+    class Meta:
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"{self.title} - {self.distance_km}km"

@@ -27,7 +27,7 @@ urlpatterns = [
     path('maintenance/<int:moto_id>/add', views.maintenance_add, name='maintenance_add'),
     path('moto/<int:moto_id>/update_km/', views.update_mileage, name='update_mileage'),
     path('moto/switch/<int:moto_id>/', views.switch_moto, name='switch_moto'),
-    
+        
 
 ]
 # Solo sirve archivos media en modo DEBUG (Desarrollo)
