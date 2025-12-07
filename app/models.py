@@ -16,9 +16,13 @@ class Profile(models.Model):
 class Motorcycle(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='motorcycles')
     nickname = models.CharField(max_length=100, help_text="Apodo de tu moto (ej. La Furia)")
-    make = models.CharField(max_length=100, verbose_name="Marca")  # Ej: Bajaj, Yamaha
-    model = models.CharField(max_length=100, verbose_name="Modelo") # Ej: Pulsar NS200 (Importante para la IA)
+    make = models.CharField(max_length=100, verbose_name="Marca")
+    model = models.CharField(max_length=100, verbose_name="Modelo")
     year = models.IntegerField(verbose_name="Año")
+    
+    # [NUEVO] Campo de Placa
+    plate_number = models.CharField(max_length=20, blank=True, null=True, verbose_name="Placa/Matrícula")
+    
     mileage = models.IntegerField(default=0, verbose_name="Kilometraje Actual")
     photo = models.ImageField(upload_to='moto_photos/', default='default_motorcycle_photo.jpg', blank=True)
     is_active = models.BooleanField(default=True, help_text="Desmarcar si vendiste o diste de baja la moto")

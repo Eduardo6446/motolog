@@ -102,23 +102,95 @@ def profile(request):
         return render(request, 'profile.html', {'user': user, 'profile': profile})
     return redirect('login')
 
+# Asegúrate de tener esta función auxiliar arriba o cerca
+def get_moto_health_color(motorcycle):
+    """
+    Evalúa la salud global consultando TODOS los componentes clave.
+    Prioriza la seguridad: Un solo fallo crítico pone el semáforo en Rojo.
+    """
+    criticos = 0
+    advertencias = 0
+    consultados = 0
+
+    # Obtenemos un "snapshot" de todos los últimos mantenimientos de una sola vez
+    # para evitar demasiadas consultas a la DB dentro del bucle
+    ultimos_logs = {}
+    logs = MaintenanceLog.objects.filter(motorcycle=motorcycle).order_by('mileage_at_service')
+    for log in logs:
+        ultimos_logs[log.service_type] = log.mileage_at_service
+
+    for comp_id, _ in COMPONENTES_DASHBOARD:
+        try:
+            # 1. Calcular uso real de la pieza
+            km_base = ultimos_logs.get(comp_id, 0)
+            km_uso = motorcycle.mileage - km_base
+            if km_uso < 0: km_uso = 0
+
+            # 2. Consultar a la IA
+            payload = {
+                "modelo": motorcycle.model,
+                "componente": comp_id,
+                "km": km_uso
+            }
+            
+            # Usamos un timeout muy bajo (0.5s) por pieza para que la carga del 
+            # garaje no sea lenta si hay muchas motos.
+            response = requests.post(
+                f'{FLASK_API_URL}/predict',
+                json=payload,
+                auth=API_AUTH,
+                timeout=0.5 
+            )
+            
+            if response.status_code == 200:
+                consultados += 1
+                estado = response.json().get('prediccion_ia')
+                
+                if estado == 'fallo_critico':
+                    criticos += 1
+                elif estado == 'muy_desgastado':
+                    advertencias += 1
+                    
+        except:
+            continue # Si falla una pieza, seguimos con las demás
+
+    # 3. Lógica de Semáforo (Worst-Case Scenario)
+    if consultados == 0: return 'gray' # No hay conexión o datos
+    
+    if criticos > 0: return 'red'        # ¡Peligro! Al menos 1 cosa está mal
+    if advertencias >= 1: return 'yellow' # Atención, algo se está gastando
+    return 'green' # Todo en orden
+
 def garage(request):
     """
-    Muestra el garaje.
-    OPTIMIZACIÓN: Enviamos TODAS las motos (activas e inactivas).
-    El filtrado se hace instantáneamente en el navegador con JavaScript.
+    Muestra el garaje con Semáforo de Salud y soporte para filtro inicial.
     """
-    if 'user_id' not in request.session:
-        return redirect('login')
+    if 'user_id' not in request.session: return redirect('login')
     
     user = User.objects.get(id=request.session['user_id'])
     
-    # Obtenemos TODAS las motos del usuario
-    # Ordenamos por estado (activas primero) y luego por ID descendente (nuevas primero)
-    motorcycles = Motorcycle.objects.filter(owner=user).order_by('-is_active', '-id')
+    # 1. Recuperar filtro inicial de la URL (para inicializar el JS)
+    # Ej: /garage/?filter=inactive abrirá la pestaña de inactivos
+    current_filter = request.GET.get('filter', 'active')
+    
+    # 2. Obtener TODAS las motos (Activas e Inactivas)
+    # Necesitamos todas para que el filtrado JS sea instantáneo
+    motorcycles_qs = Motorcycle.objects.filter(owner=user).order_by('-is_active', '-id')
+    
+    # 3. Construir la lista enriquecida 'motorcycles_data'
+    motorcycles_data = []
+    for moto in motorcycles_qs:
+        motorcycles_data.append({
+            'obj': moto,  # El objeto moto para acceder a .make, .model, etc.
+            'health_color': get_moto_health_color(moto) if moto.is_active else 'gray'
+        })
 
-    return render(request, 'garage.html', {'motorcycles': motorcycles})
-
+    # 4. Enviar datos y el filtro inicial al template
+    context = {
+        'motorcycles_data': motorcycles_data,
+        'current_filter': current_filter 
+    }
+    return render(request, 'garage.html', context)
 
 def map(request):
     return render(request, 'map.html', {})
@@ -209,25 +281,44 @@ def motodetails(request, moto_id):
     }
     return render(request, 'motodetails.html', context)
 
+
 # ... (motoadd, maintenance_add, auth... todo eso sigue igual) ...
+
 def motoadd(request):
+    """Agrega una nueva moto con soporte para Placa y Foto"""
     if 'user_id' not in request.session: return redirect('login')
+
     if request.method == 'POST':
         make = request.POST.get('make')
         model = request.POST.get('model')
         year = request.POST.get('year')
         km = request.POST.get('mileage')
         nickname = request.POST.get('nickname')
+        plate = request.POST.get('plate') # [NUEVO]
+        
         owner_id = request.session.get('user_id')
+        
         if not all([make, model, year, km, nickname]):
             return render(request, 'motoadd.html', {'error': 'Campos obligatorios'})
+        
         photo = request.FILES.get('photo')
         owner = User.objects.get(id=owner_id)
-        motorcycle = Motorcycle(make=make, model=model, year=year, mileage=km, nickname=nickname, owner=owner, photo=photo or 'default_motorcycle_photo.jpg', is_active=True)
+        
+        motorcycle = Motorcycle(
+            make=make,
+            model=model,
+            year=year,
+            mileage=km,
+            nickname=nickname,
+            plate_number=plate, # [NUEVO] Guardar en el modelo
+            owner=owner,
+            photo=photo if photo else 'default_motorcycle_photo.jpg',
+            is_active=True
+        )
         motorcycle.save()
         return redirect('garage')
+        
     return render(request, 'motoadd.html', {})
-
 def maintenance_add(request, moto_id):
     if 'user_id' not in request.session: return redirect('login')
     user = User.objects.get(id=request.session['user_id'])

@@ -6,19 +6,20 @@
     <!-- Header -->
     <div class="pb-6 mb-6">
         <a href="{% url 'garage' %}" class="text-sm text-orange-400 hover:underline">&larr; Volver al Garaje</a>
-        <h2 class="mt-2 text-3xl font-bold">Agregar Nueva Motocicleta</h2>
+        <h2 class="mt-2 text-3xl font-bold text-white">Agregar Nueva Motocicleta</h2>
         <p class="text-gray-400">Selecciona tu modelo de nuestra base de datos certificada.</p>
     </div>
 
     <!-- Error Alert -->
     {% if error %}
-    <div class="p-4 mb-6 text-red-200 bg-red-900 border border-red-700 rounded-lg" role="alert">
+    <div class="p-4 mb-6 text-red-200 bg-red-900 border border-red-700 rounded-lg flex items-center gap-2" role="alert">
+        <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
         <span class="font-medium">Error:</span> {{ error }}
     </div>
     {% endif %}
 
     <!-- Add Motorcycle Form -->
-    <form action="{% url 'motoadd' %}" method="POST" enctype="multipart/form-data" class="p-6 space-y-6 bg-gray-800 rounded-xl border border-gray-700">
+    <form action="{% url 'motoadd' %}" method="POST" enctype="multipart/form-data" class="p-6 space-y-6 bg-gray-800 rounded-xl border border-gray-700 shadow-xl">
         {% csrf_token %}
         
         <!-- Form Fields Grid -->
@@ -28,7 +29,7 @@
             <div>
                 <label for="make" class="block text-sm font-medium text-gray-300">Marca</label>
                 <select name="make" id="make" required 
-                        class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm transition-colors">
+                        class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent sm:text-sm transition-all">
                     <option value="" disabled selected>Selecciona una marca...</option>
                     <!-- Se llenará con JS -->
                 </select>
@@ -38,17 +39,16 @@
             <div>
                 <label for="model" class="block text-sm font-medium text-gray-300">Modelo</label>
                 <select name="model" id="model" required disabled
-                        class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent sm:text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                     <option value="" disabled selected>Primero selecciona marca...</option>
                 </select>
-                <!-- Input oculto para enviar el nombre legible si se necesita, aunque el value del select es lo que importa -->
             </div>
 
             <!-- Año (Dropdown Dependiente) -->
             <div>
                 <label for="year" class="block text-sm font-medium text-gray-300">Año</label>
                 <select name="year" id="year" required disabled
-                        class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent sm:text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                     <option value="" disabled selected>Selecciona modelo...</option>
                 </select>
             </div>
@@ -58,31 +58,39 @@
                 <label for="mileage" class="block text-sm font-medium text-gray-300">Kilometraje Actual</label>
                 <div class="relative mt-1 rounded-md shadow-sm">
                     <input type="number" name="mileage" id="mileage" required placeholder="Ej: 12500" min="0"
-                           class="block w-full px-3 py-2 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm transition-colors">
+                           class="block w-full pl-3 pr-12 py-2 text-white bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent sm:text-sm transition-all">
                     <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                         <span class="text-gray-400 sm:text-sm">km</span>
                     </div>
                 </div>
             </div>
+
+            <!-- [NUEVO] Placa / Matrícula -->
+            <div>
+                <label for="plate" class="block text-sm font-medium text-gray-300">Placa / Matrícula (Opcional)</label>
+                <input type="text" name="plate" id="plate" placeholder="Ej: M 123-456" 
+                       class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent sm:text-sm transition-all uppercase">
+            </div>
             
             <!-- Apodo (Opcional) -->
-            <div class="sm:col-span-2">
+            <div>
                 <label for="nickname" class="block text-sm font-medium text-gray-300">Apodo (Opcional)</label>
                 <input type="text" name="nickname" id="nickname" placeholder="Ej: La Bestia Negra" 
-                       class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm transition-colors">
+                       class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent sm:text-sm transition-all">
             </div>
 
             <!-- Subir Foto -->
             <div class="sm:col-span-2">
-                <label class="block text-sm font-medium text-gray-300">Foto de la Motocicleta</label>
-                <div class="flex items-center justify-center w-full mt-2">
-                    <label for="photo-upload" class="relative flex flex-col items-center justify-center w-full h-40 border-2 border-gray-600 border-dashed rounded-lg cursor-pointer hover:bg-gray-700 hover:border-gray-500 transition-all group">
+                <label class="block text-sm font-medium text-gray-300 mb-2">Foto de la Motocicleta</label>
+                <div class="flex items-center justify-center w-full">
+                    <label for="photo-upload" class="relative flex flex-col items-center justify-center w-full h-40 border-2 border-gray-600 border-dashed rounded-xl cursor-pointer hover:bg-gray-700/50 hover:border-orange-500/50 transition-all group bg-gray-700/20">
                         <div class="flex flex-col items-center justify-center pt-5 pb-6">
                             <svg class="w-10 h-10 mb-3 text-gray-400 group-hover:text-orange-400 transition-colors" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
                                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
                             </svg>
                             <p class="mb-2 text-sm text-gray-400"><span class="font-semibold text-orange-400">Haz clic para subir</span> o arrastra y suelta</p>
                             <p class="text-xs text-gray-500">PNG, JPG o JPEG (Máx. 800x400px)</p>
+                            <!-- Muestra el nombre del archivo seleccionado -->
                             <p id="file-name" class="mt-2 text-sm text-green-400 font-medium"></p>
                         </div>
                         <input id="photo-upload" name="photo" type="file" class="hidden" accept="image/*" onchange="document.getElementById('file-name').textContent = this.files[0].name">
@@ -95,10 +103,10 @@
         <!-- Botones de Acción -->
         <div class="pt-6 border-t border-gray-700">
             <div class="flex justify-end gap-3">
-                <a href="{% url 'garage' %}" class="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-transparent rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-gray-500 transition-colors">
+                <a href="{% url 'garage' %}" class="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-transparent rounded-lg shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-gray-500 transition-colors">
                     Cancelar
                 </a>
-                <button type="submit" class="inline-flex justify-center px-6 py-2 text-sm font-medium text-white bg-orange-500 border border-transparent rounded-md shadow-sm hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-orange-500 transition-colors">
+                <button type="submit" class="inline-flex justify-center px-6 py-2 text-sm font-bold text-white bg-orange-500 border border-transparent rounded-lg shadow-sm hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-orange-500 transition-colors shadow-orange-500/20">
                     Guardar Motocicleta
                 </button>
             </div>
@@ -108,6 +116,7 @@
 
 <script>
     // --- DATOS MAESTROS DE MOTOS (Sincronizados con la IA) ---
+    // IMPORTANTE: Los IDs aquí deben coincidir con 'base_conocimiento.json'
     const motoData = {
         "Bajaj": [
             { id: "Bajaj_Pulsar_NS200", name: "Pulsar NS200", years: [2018, 2024] },
@@ -156,9 +165,8 @@
             if (motoData[selectedMake]) {
                 motoData[selectedMake].forEach(moto => {
                     const option = document.createElement('option');
-                    option.value = moto.id; // IMPORTANTE: Valor para la IA (ej: Bajaj_Pulsar_NS200)
-                    option.textContent = moto.name; // Texto legible
-                    // Guardamos el rango de años en data attributes para usarlo luego
+                    option.value = moto.id; // Se envía el ID técnico a la BD
+                    option.textContent = moto.name; // Se muestra el nombre bonito
                     option.dataset.minYear = moto.years[0];
                     option.dataset.maxYear = moto.years[1];
                     modelSelect.appendChild(option);
