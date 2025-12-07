@@ -5,9 +5,32 @@
 <div class="p-4 mx-auto max-w-7xl sm:p-6 lg:p-8">
     
     <!-- Header de Bienvenida -->
-    <div class="pb-6 mb-8 border-b border-gray-700">
-        <h2 class="text-3xl font-bold text-white">¡Hola, {{ user.first_name|default:user.username }}! 👋</h2>
-        <p class="mt-1 text-gray-400">Bienvenido a tu garaje digital. Aquí está el estado de tu máquina.</p>
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between pb-6 mb-8 border-b border-gray-700 gap-4">
+        <div>
+            <h2 class="text-3xl font-bold text-white">¡Hola, {{ user.first_name|default:user.username }}! 👋</h2>
+            <p class="mt-1 text-gray-400">Bienvenido a tu garaje digital.</p>
+        </div>
+        
+        <!-- WIDGET CLIMA (NUEVO) -->
+        <div id="weather-widget" class="hidden md:flex items-center gap-3 px-4 py-2 bg-gray-800 border border-gray-700 rounded-xl shadow-sm transition-all hover:border-blue-500/50">
+            <div id="weather-icon" class="text-2xl">🌤️</div>
+            <div>
+                <p id="weather-temp" class="text-lg font-bold text-white">--°C</p>
+                <p id="weather-desc" class="text-xs text-gray-400">Cargando clima...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- WIDGET CLIMA MÓVIL (Solo visible en pantallas pequeñas) -->
+    <div id="weather-widget-mobile" class="md:hidden mb-6 p-4 bg-gradient-to-r from-blue-900/40 to-gray-800 border border-blue-700/30 rounded-xl flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <span id="weather-icon-m" class="text-3xl">🌤️</span>
+            <div>
+                <p class="text-sm text-gray-300 font-medium">Managua</p>
+                <p id="weather-desc-m" class="text-xs text-gray-400">Cargando...</p>
+            </div>
+        </div>
+        <p id="weather-temp-m" class="text-2xl font-bold text-white">--°</p>
     </div>
 
     <!-- LOGIC: SHOW DASHBOARD IF MOTOS EXIST -->
@@ -15,70 +38,47 @@
     
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
         
-        <!-- LEFT COLUMN (2/3 width on large screens) -->
+        <!-- LEFT COLUMN (2/3 width) -->
         <div class="lg:col-span-2 space-y-6">
             
             <!-- 1. ALERTAS / PRÓXIMO MANTENIMIENTO -->
             {% if maintenance_reminders %}
                 {% for reminder in maintenance_reminders %}
-                <div class="p-4 bg-gradient-to-r from-orange-900/40 to-gray-800 border border-orange-700/50 rounded-xl flex items-start gap-4 shadow-lg">
+                <!-- Data Attribute para JS Notification -->
+                <div class="maintenance-alert p-4 bg-gradient-to-r from-orange-900/40 to-gray-800 border border-orange-700/50 rounded-xl flex items-start gap-4 shadow-lg"
+                     data-title="Recordatorio MotoLog"
+                     data-body="Tu {{ reminder.service_type }} está próximo o vencido.">
+                    
                     <div class="p-3 bg-orange-500/20 rounded-lg text-orange-400">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     </div>
                     <div>
                         <h4 class="font-bold text-orange-100">Recordatorio: {{ reminder.service_type }}</h4>
-                        <div class="text-sm text-gray-400 mt-1">
+                        <p class="text-sm text-gray-400">
                             {% if reminder.reminder_type == 'distance' %}
-                                <!-- LÓGICA DE KILOMETRAJE -->
+                                {% widthratio main_moto.mileage 1 -1 as km_negativos %}
                                 {% if main_moto.mileage >= reminder.next_service_at_mileage %}
-                                    <!-- CASO VENCIDO -->
-                                    {% widthratio reminder.next_service_at_mileage 1 -1 as meta_negativa %}
-                                    <span class="text-red-500 font-bold bg-red-900/20 px-2 py-0.5 rounded border border-red-500/30">
-                                        ¡VENCIDO!
-                                    </span>
-                                    <span class="text-red-400 block mt-1">
-                                        Se pasó hace <b>{{ main_moto.mileage|add:meta_negativa }} km</b>
-                                    </span>
+                                    <span class="text-red-400 font-bold">¡VENCIDO hace {{ main_moto.mileage|add:km_negativos|stringformat:"+d"|slice:"1:" }} km!</span>
                                 {% else %}
-                                    <!-- CASO PENDIENTE -->
-                                    {% widthratio main_moto.mileage 1 -1 as actual_negativo %}
-                                    Programado a los <span class="text-white font-bold">{{ reminder.next_service_at_mileage }} km</span>
-                                    <span class="block text-orange-300 mt-0.5">
-                                        (Faltan <b>{{ reminder.next_service_at_mileage|add:actual_negativo }} km</b>)
-                                    </span>
+                                    Faltan <span class="text-white font-bold">{{ reminder.next_service_at_mileage|add:km_negativos }} km</span>
                                 {% endif %}
-
                             {% else %}
-                                <!-- LÓGICA DE FECHA -->
-                                <!-- Nota: En Django templates comparar fechas directo es limitado sin filtros custom, 
-                                     pero podemos usar la fecha actual 'now' -->
-                                {% now "Y-m-d" as hoy_str %}
-                                {% if reminder.next_service_date|date:"Y-m-d" < hoy_str %}
-                                     <span class="text-red-500 font-bold bg-red-900/20 px-2 py-0.5 rounded border border-red-500/30">
-                                        ¡VENCIDO!
-                                    </span>
-                                    <span class="text-red-400 block mt-1">
-                                        Era para el {{ reminder.next_service_date }}
-                                    </span>
-                                {% else %}
-                                    Programado para el <span class="text-white font-bold">{{ reminder.next_service_date }}</span>
-                                {% endif %}
+                                Para el <span class="text-white font-bold">{{ reminder.next_service_date }}</span>
                             {% endif %}
-                        </div>
+                        </p>
                     </div>
                 </div>
                 {% endfor %}
             {% else %}
-                <!-- No hay alertas -->
                 <div class="p-4 bg-gray-800/50 border border-green-900/30 rounded-xl flex items-center gap-4">
                     <div class="p-2 bg-green-500/10 rounded-full text-green-400">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                     </div>
-                    <p class="text-sm text-gray-400">Todo en orden. No tienes mantenimientos pendientes.</p>
+                    <p class="text-sm text-gray-400">Todo en orden. Disfruta el camino.</p>
                 </div>
             {% endif %}
 
-            <!-- 2. TARJETA PRINCIPAL DE LA MOTO -->
+            <!-- 2. TARJETA PRINCIPAL -->
             <div class="relative overflow-hidden bg-gray-800 rounded-2xl shadow-xl border border-gray-700 group">
                 <div class="absolute inset-0 bg-gradient-to-r from-gray-900/90 via-gray-900/40 to-transparent z-10 pointer-events-none"></div>
                 
@@ -103,7 +103,7 @@
                             <p class="text-3xl font-bold text-white font-mono">{{ main_moto.mileage }} <span class="text-lg text-gray-500">km</span></p>
                         </div>
                         <a href="{% url 'motodetails' moto_id=main_moto.id %}" class="px-5 py-2.5 bg-white text-gray-900 font-bold rounded-lg hover:bg-gray-200 transition-colors shadow-lg">
-                            Ver Diagnóstico
+                            Ver Diagnóstico IA
                         </a>
                     </div>
                 </div>
@@ -118,7 +118,6 @@
                     <span class="font-medium text-sm">Registrar Servicio</span>
                 </a>
                 
-                <!-- BOTÓN CAMBIAR MOTO (Abre Modal) -->
                 <button id="open-switch-modal" class="flex flex-col items-center justify-center p-4 bg-gray-800 border border-gray-700 rounded-xl hover:bg-gray-700 hover:border-blue-500/50 transition-all group">
                     <div class="p-3 bg-gray-700 rounded-full text-blue-400 group-hover:bg-blue-500 group-hover:text-white transition-colors mb-2">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
@@ -126,13 +125,10 @@
                     <span class="font-medium text-sm">Cambiar Moto</span>
                 </button>
             </div>
-
         </div>
 
         <!-- RIGHT COLUMN (1/3 width) -->
         <div class="space-y-6">
-            
-            <!-- TARJETA DE ACTIVIDAD RECIENTE -->
             <div class="bg-gray-800 rounded-xl border border-gray-700 p-5 h-full">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-bold text-white">Actividad Reciente</h3>
@@ -151,16 +147,10 @@
                                     </span>
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-medium text-white truncate">
-                                        {{ log.get_service_type_display }}
-                                    </p>
-                                    <p class="text-xs text-gray-400">
-                                        {{ log.date|date:"d M, Y" }}
-                                    </p>
+                                    <p class="text-sm font-medium text-white truncate">{{ log.get_service_type_display }}</p>
+                                    <p class="text-xs text-gray-400">{{ log.date|date:"d M, Y" }}</p>
                                 </div>
-                                <div class="inline-flex items-center text-xs font-semibold text-gray-500">
-                                    {{ log.mileage_at_service }} km
-                                </div>
+                                <div class="inline-flex items-center text-xs font-semibold text-gray-500">{{ log.mileage_at_service }} km</div>
                             </div>
                         </li>
                         {% endfor %}
@@ -172,125 +162,151 @@
                     </div>
                 {% endif %}
             </div>
-
         </div>
-
     </div>
 
     {% else %}
-    
-    <!-- EMPTY STATE VIEW -->
+    <!-- EMPTY STATE -->
     <div class="flex flex-col items-center justify-center py-24 text-center bg-gray-800 rounded-2xl border-2 border-dashed border-gray-700">
         <div class="p-5 bg-gray-700/50 rounded-full mb-6">
             <svg class="w-16 h-16 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
         </div>
         <h3 class="text-2xl font-bold text-white">Tu garaje está vacío</h3>
         <p class="max-w-md mx-auto mt-3 text-gray-400">Para obtener diagnósticos de IA y recordatorios, primero necesitas registrar tu motocicleta.</p>
-        
         <a href="{% url 'motoadd' %}" class="inline-flex items-center gap-2 px-8 py-4 mt-8 text-base font-bold text-white transition-all duration-200 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl hover:from-orange-600 hover:to-orange-700 shadow-lg shadow-orange-500/20 transform hover:-translate-y-1">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
             <span>Agregar mi primera moto</span>
         </a>
     </div>
-
     {% endif %}
 
 </div>
 
-<!-- MODAL: CAMBIAR MOTO -->
+<!-- MODAL CAMBIAR MOTO -->
 <div id="switch-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-80 backdrop-blur-sm transition-opacity duration-300">
     <div class="w-full max-w-lg bg-gray-800 rounded-xl shadow-2xl border border-gray-700 transform transition-all scale-100">
-        
-        <!-- Modal Header -->
         <div class="flex items-center justify-between p-5 border-b border-gray-700">
             <h3 class="text-xl font-bold text-white">Selecciona tu Moto Principal</h3>
             <button id="close-switch-modal" class="text-gray-400 hover:text-white transition-colors p-1 rounded-full hover:bg-gray-700">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
         </div>
-        
-        <!-- Modal Body (Lista de Motos) -->
         <div class="p-5 max-h-[60vh] overflow-y-auto">
             {% if motorcycles %}
             <div class="space-y-3">
                 {% for moto in motorcycles %}
-                
-                <!-- LÓGICA VISUAL: ¿Es esta la moto actual? -->
                 {% if main_moto and main_moto.id == moto.id %}
-                    <!-- Tarjeta SELECCIONADA -->
                     <div class="flex items-center gap-4 p-3 bg-orange-500/10 rounded-xl border-2 border-orange-500 cursor-default">
                         <div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-900 border border-orange-500/50">
-                            {% if moto.photo %}
-                                <img src="{{ moto.photo.url }}" alt="{{ moto.model }}" class="w-full h-full object-cover">
-                            {% else %}
-                                <img src="https://placehold.co/100x100/1f2937/4b5563?text=M" class="w-full h-full object-cover">
-                            {% endif %}
+                            {% if moto.photo %} <img src="{{ moto.photo.url }}" alt="{{ moto.model }}" class="w-full h-full object-cover"> {% else %} <img src="https://placehold.co/100x100/1f2937/4b5563?text=M" class="w-full h-full object-cover"> {% endif %}
                         </div>
-                        <div class="flex-1">
-                            <h4 class="font-bold text-orange-400">{{ moto.nickname|default:moto.model }}</h4>
-                            <p class="text-xs text-gray-300">{{ moto.make }} {{ moto.model }}</p>
-                        </div>
+                        <div class="flex-1"><h4 class="font-bold text-orange-400">{{ moto.nickname|default:moto.model }}</h4><p class="text-xs text-gray-300">{{ moto.make }} {{ moto.model }}</p></div>
                         <span class="px-2 py-1 text-xs font-bold text-gray-900 bg-orange-400 rounded-full">Actual</span>
                     </div>
                 {% else %}
-                    <!-- Tarjeta NORMAL (Clickeable) -->
                     <a href="{% url 'switch_moto' moto_id=moto.id %}" class="flex items-center gap-4 p-3 bg-gray-700/30 rounded-xl border border-gray-600 hover:border-gray-400 hover:bg-gray-700 transition-all group">
                         <div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-900 border border-gray-600 group-hover:border-gray-500">
-                            {% if moto.photo %}
-                                <img src="{{ moto.photo.url }}" alt="{{ moto.model }}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
-                            {% else %}
-                                <img src="https://placehold.co/100x100/1f2937/4b5563?text=M" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
-                            {% endif %}
+                            {% if moto.photo %} <img src="{{ moto.photo.url }}" alt="{{ moto.model }}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"> {% else %} <img src="https://placehold.co/100x100/1f2937/4b5563?text=M" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"> {% endif %}
                         </div>
-                        <div class="flex-1">
-                            <h4 class="font-bold text-white group-hover:text-white transition-colors">{{ moto.nickname|default:moto.model }}</h4>
-                            <p class="text-xs text-gray-400 group-hover:text-gray-300">{{ moto.make }} {{ moto.model }}</p>
-                        </div>
-                        <div class="p-2 text-gray-500 group-hover:text-white bg-gray-800 rounded-full group-hover:bg-gray-600 transition-all">
-                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        </div>
+                        <div class="flex-1"><h4 class="font-bold text-white group-hover:text-white transition-colors">{{ moto.nickname|default:moto.model }}</h4><p class="text-xs text-gray-400 group-hover:text-gray-300">{{ moto.make }} {{ moto.model }}</p></div>
+                        <div class="p-2 text-gray-500 group-hover:text-white bg-gray-800 rounded-full group-hover:bg-gray-600 transition-all"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></div>
                     </a>
                 {% endif %}
-
                 {% endfor %}
             </div>
             {% else %}
                 <p class="text-center text-gray-400 py-4">No tienes motos registradas.</p>
             {% endif %}
         </div>
-        
-        <!-- Modal Footer -->
         <div class="p-4 border-t border-gray-700 bg-gray-900/50 rounded-b-xl flex justify-center">
-            <a href="{% url 'motoadd' %}" class="text-sm font-medium text-orange-400 hover:text-orange-300 hover:underline">
-                + Registrar otra moto
-            </a>
+            <a href="{% url 'motoadd' %}" class="text-sm font-medium text-orange-400 hover:text-orange-300 hover:underline">+ Registrar otra moto</a>
         </div>
-
     </div>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const modal = document.getElementById('switch-modal');
-        const openBtn = document.getElementById('open-switch-modal');
-        const closeBtn = document.getElementById('close-switch-modal');
-
-        function openModal() {
-            modal.classList.remove('hidden');
+    // --- 1. SCRIPT DE NOTIFICACIONES (PWA) ---
+    document.addEventListener('DOMContentLoaded', () => {
+        if ("Notification" in window) {
+            // Verificar si hay alertas en el HTML
+            const alerts = document.querySelectorAll('.maintenance-alert');
+            
+            if (alerts.length > 0) {
+                // Solicitar permiso
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        // Enviar la primera alerta
+                        const firstAlert = alerts[0];
+                        const title = firstAlert.getAttribute('data-title');
+                        const body = firstAlert.getAttribute('data-body');
+                        
+                        new Notification(title, {
+                            body: body,
+                            icon: "https://placehold.co/128x128/f97316/ffffff?text=M",
+                            vibrate: [200, 100, 200]
+                        });
+                    }
+                });
+            }
         }
-
-        function closeModal() {
-            modal.classList.add('hidden');
-        }
-
-        if(openBtn) openBtn.addEventListener('click', openModal);
-        if(closeBtn) closeBtn.addEventListener('click', closeModal);
-
-        // Cerrar si clic afuera
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal) closeModal();
-        });
     });
+
+    // --- 2. SCRIPT DE CLIMA (Open-Meteo API) ---
+    async function loadWeather() {
+        const tempEl = document.getElementById('weather-temp');
+        const descEl = document.getElementById('weather-desc');
+        const iconEl = document.getElementById('weather-icon');
+        // Móvil
+        const tempElM = document.getElementById('weather-temp-m');
+        const descElM = document.getElementById('weather-desc-m');
+        const iconElM = document.getElementById('weather-icon-m');
+
+        if (!tempEl) return;
+
+        try {
+            // Coordenadas Managua
+            const lat = 12.13;
+            const lon = -86.27;
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
+            
+            const response = await fetch(url);
+            const data = await response.json();
+            const temp = Math.round(data.current_weather.temperature);
+            const code = data.current_weather.weathercode;
+            
+            // Mapeo simple de códigos WMO
+            let icon = '☀️';
+            let desc = 'Soleado';
+            
+            if (code >= 1 && code <= 3) { icon = '⛅'; desc = 'Nublado'; }
+            else if (code >= 51 && code <= 67) { icon = '🌧️'; desc = 'Lluvia'; }
+            else if (code >= 80 && code <= 99) { icon = '⛈️'; desc = 'Tormenta'; }
+
+            // Actualizar UI Escritorio
+            tempEl.innerText = `${temp}°C`;
+            descEl.innerText = desc;
+            iconEl.innerText = icon;
+
+            // Actualizar UI Móvil
+            if(tempElM) tempElM.innerText = `${temp}°`;
+            if(descElM) descElM.innerText = desc;
+            if(iconElM) iconElM.innerText = icon;
+
+        } catch (e) {
+            console.error("Error clima:", e);
+            if(descEl) descEl.innerText = "No disponible";
+        }
+    }
+    loadWeather();
+
+    // --- 3. Lógica Modal (Existente) ---
+    const modal = document.getElementById('switch-modal');
+    const openBtn = document.getElementById('open-switch-modal');
+    const closeBtn = document.getElementById('close-switch-modal');
+
+    if(openBtn) openBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+    if(closeBtn) closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
+    window.addEventListener('click', (e) => { if(e.target === modal) modal.classList.add('hidden'); });
 </script>
 
 {% endblock %}
