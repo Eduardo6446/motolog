@@ -16,7 +16,11 @@
             <div id="weather-icon" class="text-2xl">🌤️</div>
             <div>
                 <p id="weather-temp" class="text-lg font-bold text-white">--°C</p>
-                <p id="weather-desc" class="text-xs text-gray-400">Cargando...</p>
+                <div class="flex flex-col">
+                    <p id="weather-desc" class="text-xs text-gray-400">Cargando...</p>
+                    <!-- Nueva línea para probabilidad de lluvia -->
+                    <p id="rain-prob" class="text-xs text-blue-400 font-bold hidden">0% Lluvia</p>
+                </div>
             </div>
         </div>
     </div>
@@ -30,7 +34,21 @@
                 <p id="weather-desc-m" class="text-xs text-gray-400">Cargando...</p>
             </div>
         </div>
-        <p id="weather-temp-m" class="text-2xl font-bold text-white">--°</p>
+        <div class="text-right">
+            <p id="weather-temp-m" class="text-2xl font-bold text-white">--°</p>
+            <p id="rain-prob-m" class="text-xs text-blue-400 font-bold hidden">0% 💧</p>
+        </div>
+    </div>
+
+    <!-- ALERTA DE LLUVIA (Oculta por defecto, se activa con JS) -->
+    <div id="rain-alert" class="hidden mb-8 p-4 bg-blue-600/20 border border-blue-500/50 rounded-xl flex items-start gap-4 animate-pulse shadow-lg shadow-blue-500/10">
+        <div class="p-2 bg-blue-500/20 rounded-lg text-blue-300">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+        </div>
+        <div>
+            <h4 class="font-bold text-blue-100">¡Probabilidad de Lluvia Alta!</h4>
+            <p class="text-sm text-blue-200 mt-1">Se espera lluvia (>70%) en las próximas 3 horas. No olvides tu impermeable 🧥.</p>
+        </div>
     </div>
 
     <!-- LOGIC: SHOW DASHBOARD IF MOTOS EXIST -->
@@ -45,7 +63,7 @@
             {% if maintenance_reminders %}
                 {% for reminder in maintenance_reminders %}
                 <div class="maintenance-alert p-4 bg-gradient-to-r from-orange-900/40 to-gray-800 border border-orange-700/50 rounded-xl flex items-start gap-4 shadow-lg"
-                     data-title="Recordatorio de Mantenimiento"
+                     data-title="Recordatorio"
                      data-body="Tu {{ reminder.service_type }} requiere atención.">
                     
                     <div class="p-3 bg-orange-500/20 rounded-lg text-orange-400">
@@ -111,7 +129,7 @@
                             <p class="text-3xl font-bold text-white font-mono">{{ main_moto.mileage }} <span class="text-lg text-gray-500">km</span></p>
                         </div>
                         <a href="{% url 'motodetails' moto_id=main_moto.id %}" class="px-5 py-2.5 bg-white text-gray-900 font-bold rounded-lg hover:bg-gray-200 transition-colors shadow-lg">
-                            Ver Diagnóstico
+                            Ver Diagnóstico IA
                         </a>
                     </div>
                 </div>
@@ -227,14 +245,12 @@
 <!-- MODAL: CAMBIAR MOTO -->
 <div id="switch-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-80 backdrop-blur-sm transition-opacity duration-300">
     <div class="w-full max-w-lg bg-gray-800 rounded-xl shadow-2xl border border-gray-700 transform transition-all scale-100">
-        
         <div class="flex items-center justify-between p-5 border-b border-gray-700">
             <h3 class="text-xl font-bold text-white">Selecciona tu Moto Principal</h3>
             <button id="close-switch-modal" class="text-gray-400 hover:text-white transition-colors p-1 rounded-full hover:bg-gray-700">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
         </div>
-        
         <div class="p-5 max-h-[60vh] overflow-y-auto">
             {% if motorcycles %}
             <div class="space-y-3">
@@ -242,34 +258,18 @@
                 {% if main_moto and main_moto.id == moto.id %}
                     <div class="flex items-center gap-4 p-3 bg-orange-500/10 rounded-xl border-2 border-orange-500 cursor-default">
                         <div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-900 border border-orange-500/50">
-                            {% if moto.photo %}
-                                <img src="{{ moto.photo.url }}" alt="{{ moto.model }}" class="w-full h-full object-cover">
-                            {% else %}
-                                <img src="https://placehold.co/100x100/1f2937/4b5563?text=M" class="w-full h-full object-cover">
-                            {% endif %}
+                            {% if moto.photo %} <img src="{{ moto.photo.url }}" alt="{{ moto.model }}" class="w-full h-full object-cover"> {% else %} <img src="https://placehold.co/100x100/1f2937/4b5563?text=M" class="w-full h-full object-cover"> {% endif %}
                         </div>
-                        <div class="flex-1">
-                            <h4 class="font-bold text-orange-400">{{ moto.nickname|default:moto.model }}</h4>
-                            <p class="text-xs text-gray-300">{{ moto.make }} {{ moto.model }}</p>
-                        </div>
+                        <div class="flex-1"><h4 class="font-bold text-orange-400">{{ moto.nickname|default:moto.model }}</h4><p class="text-xs text-gray-300">{{ moto.make }} {{ moto.model }}</p></div>
                         <span class="px-2 py-1 text-xs font-bold text-gray-900 bg-orange-400 rounded-full">Actual</span>
                     </div>
                 {% else %}
                     <a href="{% url 'switch_moto' moto_id=moto.id %}" class="flex items-center gap-4 p-3 bg-gray-700/30 rounded-xl border border-gray-600 hover:border-gray-400 hover:bg-gray-700 transition-all group">
                         <div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-900 border border-gray-600 group-hover:border-gray-500">
-                            {% if moto.photo %}
-                                <img src="{{ moto.photo.url }}" alt="{{ moto.model }}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
-                            {% else %}
-                                <img src="https://placehold.co/100x100/1f2937/4b5563?text=M" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
-                            {% endif %}
+                            {% if moto.photo %} <img src="{{ moto.photo.url }}" alt="{{ moto.model }}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"> {% else %} <img src="https://placehold.co/100x100/1f2937/4b5563?text=M" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"> {% endif %}
                         </div>
-                        <div class="flex-1">
-                            <h4 class="font-bold text-white group-hover:text-white transition-colors">{{ moto.nickname|default:moto.model }}</h4>
-                            <p class="text-xs text-gray-400 group-hover:text-gray-300">{{ moto.make }} {{ moto.model }}</p>
-                        </div>
-                        <div class="p-2 text-gray-500 group-hover:text-white bg-gray-800 rounded-full group-hover:bg-gray-600 transition-all">
-                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        </div>
+                        <div class="flex-1"><h4 class="font-bold text-white group-hover:text-white transition-colors">{{ moto.nickname|default:moto.model }}</h4><p class="text-xs text-gray-400 group-hover:text-gray-300">{{ moto.make }} {{ moto.model }}</p></div>
+                        <div class="p-2 text-gray-500 group-hover:text-white bg-gray-800 rounded-full group-hover:bg-gray-600 transition-all"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></div>
                     </a>
                 {% endif %}
                 {% endfor %}
@@ -278,7 +278,6 @@
                 <p class="text-center text-gray-400 py-4">No tienes motos registradas.</p>
             {% endif %}
         </div>
-        
         <div class="p-4 border-t border-gray-700 bg-gray-900/50 rounded-b-xl flex justify-center">
             <a href="{% url 'motoadd' %}" class="text-sm font-medium text-orange-400 hover:text-orange-300 hover:underline">+ Registrar otra moto</a>
         </div>
@@ -309,30 +308,70 @@
         const tempEl = document.getElementById('weather-temp');
         const descEl = document.getElementById('weather-desc');
         const iconEl = document.getElementById('weather-icon');
+        const probEl = document.getElementById('rain-prob'); // Escritorio
+        
         const tempElM = document.getElementById('weather-temp-m');
         const descElM = document.getElementById('weather-desc-m');
         const iconElM = document.getElementById('weather-icon-m');
+        const probElM = document.getElementById('rain-prob-m'); // Móvil
+        
+        const rainAlert = document.getElementById('rain-alert');
 
         if (!tempEl && !tempElM) return;
 
         try {
             const lat = 12.13; const lon = -86.27; // Managua
-            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
+            // SOLICITAMOS LA PROBABILIDAD DE LLUVIA POR HORA (forecast_days=1 para hoy)
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=precipitation_probability&timezone=auto&forecast_days=1`;
+            
             const response = await fetch(url);
             const data = await response.json();
+            
+            // Datos Actuales
             const temp = Math.round(data.current_weather.temperature);
             const code = data.current_weather.weathercode;
             
+            // Datos de Lluvia (Próximas 3 horas)
+            const currentHour = new Date().getHours();
+            const hourlyProbs = data.hourly.precipitation_probability;
+            // Tomamos la prob máxima entre ahora y las próximas 2 horas
+            const next3Hours = hourlyProbs.slice(currentHour, currentHour + 3);
+            const maxRainChance = Math.max(...next3Hours) || 0;
+
             let icon = '☀️'; let desc = 'Soleado';
             if (code >= 1 && code <= 3) { icon = '⛅'; desc = 'Nublado'; }
             else if (code >= 51 && code <= 67) { icon = '🌧️'; desc = 'Lluvia'; }
             else if (code >= 80 && code <= 99) { icon = '⛈️'; desc = 'Tormenta'; }
 
-            if(tempEl) { tempEl.innerText = `${temp}°C`; descEl.innerText = desc; iconEl.innerText = icon; }
-            if(tempElM) { tempElM.innerText = `${temp}°`; descElM.innerText = desc; iconElM.innerText = icon; }
+            // UI Escritorio
+            if(tempEl) { 
+                tempEl.innerText = `${temp}°C`; 
+                descEl.innerText = desc; 
+                iconEl.innerText = icon;
+                if(probEl) {
+                    probEl.innerText = `${maxRainChance}% Prob. Lluvia`;
+                    probEl.classList.remove('hidden');
+                }
+            }
+            
+            // UI Móvil
+            if(tempElM) { 
+                tempElM.innerText = `${temp}°`; 
+                descElM.innerText = desc; 
+                iconElM.innerText = icon;
+                if(probElM) {
+                    probElM.innerText = `${maxRainChance}% 💧`;
+                    probElM.classList.remove('hidden');
+                }
+            }
+
+            // Alerta de Lluvia (Si > 70%)
+            if (maxRainChance > 70 && rainAlert) {
+                rainAlert.classList.remove('hidden');
+            }
 
         } catch (e) {
-            console.log("Clima no disponible");
+            console.log("Clima no disponible", e);
         }
     }
     loadWeather();
