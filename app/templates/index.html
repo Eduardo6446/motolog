@@ -1,121 +1,266 @@
-{% extends "layout.html" %}
+{% extends "base.html" %}
+
 {% block content %}
+
 <div class="p-4 mx-auto max-w-7xl sm:p-6 lg:p-8">
-                <!-- Header -->
-                <div class="pb-6 mb-6 border-b border-gray-700">
-                    <h2 class="text-3xl font-bold">¡Hola, {{ user.first_name }}!</h2>
-                    <p class="text-gray-400">Bienvenido a tu garaje digital.</p>
+    
+    <!-- Header de Bienvenida -->
+    <div class="pb-6 mb-8 border-b border-gray-700">
+        <h2 class="text-3xl font-bold text-white">¡Hola, {{ user.first_name|default:user.username }}! 👋</h2>
+        <p class="mt-1 text-gray-400">Bienvenido a tu garaje digital. Aquí está el estado de tu máquina.</p>
+    </div>
+
+    <!-- LOGIC: SHOW DASHBOARD IF MOTOS EXIST -->
+    {% if main_moto %}
+    
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
+        
+        <!-- LEFT COLUMN (2/3 width on large screens) -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- 1. ALERTAS / PRÓXIMO MANTENIMIENTO -->
+            {% if maintenance_reminders %}
+                {% for reminder in maintenance_reminders %}
+                <div class="p-4 bg-gradient-to-r from-orange-900/40 to-gray-800 border border-orange-700/50 rounded-xl flex items-start gap-4 shadow-lg">
+                    <div class="p-3 bg-orange-500/20 rounded-lg text-orange-400">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-orange-100">Recordatorio: {{ reminder.service_type }}</h4>
+                        <p class="text-sm text-gray-400">
+                            {% if reminder.reminder_type == 'distance' %}
+                                Programado a los <span class="text-white font-bold">{{ reminder.next_service_at_mileage }} km</span>
+                                (Faltan {{ reminder.next_service_at_mileage|add:"-"|add:main_moto.mileage }} km)
+                            {% else %}
+                                Programado para el <span class="text-white font-bold">{{ reminder.next_service_date }}</span>
+                            {% endif %}
+                        </p>
+                    </div>
                 </div>
+                {% endfor %}
+            {% else %}
+                <!-- No hay alertas -->
+                <div class="p-4 bg-gray-800/50 border border-green-900/30 rounded-xl flex items-center gap-4">
+                    <div class="p-2 bg-green-500/10 rounded-full text-green-400">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <p class="text-sm text-gray-400">Todo en orden. No tienes mantenimientos pendientes.</p>
+                </div>
+            {% endif %}
+
+            <!-- 2. TARJETA PRINCIPAL DE LA MOTO -->
+            <div class="relative overflow-hidden bg-gray-800 rounded-2xl shadow-xl border border-gray-700 group">
+                <div class="absolute inset-0 bg-gradient-to-r from-gray-900/90 via-gray-900/40 to-transparent z-10 pointer-events-none"></div>
                 
-                <!-- 
-                    DEFAULT VIEW:
-                    - This section should be shown with conditional logic
-                      when the user HAS registered motorcycles.
-                -->
-                {% if motorcycles and motorcycles.is_active %}
-                <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
-                    
-                    <!-- LEFT COLUMN (or Top on Mobile) -->
-                    <div class="flex flex-col gap-6">
-                        <div class="p-4 bg-gray-800 rounded-xl">
-                            <h3 class="text-xl font-bold">Próximo Mantenimiento</h3>
-                            <p class="text-sm text-gray-400">{{ maintenance_reminders.next_service_date }}</p>
-                        </div>
-
-                        <!-- Maintenance Card -->
-                        <div class="flex flex-col overflow-hidden bg-gray-800 rounded-xl">
-                            <div class="relative">
-                                <img src="https://placehold.co/600x400/111827/4b5563?text=Mi+Moto" 
-                                     alt="Imagen de motocicleta" 
-                                     class="object-cover w-full h-48 sm:h-64">
-                                <div class="absolute top-0 left-0 px-3 py-1 text-xs font-medium bg-orange-400 rounded-br-lg text-gray-900">
-                                    Alerta de Mantenimiento
-                                </div>
-                                <div class="absolute inset-0 flex items-center justify-center bg-black/30">
-                                    <h4 class="text-2xl font-bold">Cambio de Aceite</h4>
-                                </div>
-                            </div>
-                            <div class="p-4">
-                                <p class="text-sm text-gray-400">Próximo servicio programado</p>
-                                <p class="text-2xl font-bold text-orange-400">{{ maintenance_reminders }}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- RIGHT COLUMN (or Bottom on Mobile) -->
-                    <div class="flex flex-col gap-6">
-                        <!-- Statistics Summary -->
-                        <div class="p-4 space-y-4 bg-gray-800 rounded-xl">
-                            <h3 class="text-xl font-bold">Resumen de Estadísticas</h3>
-                            <div class="space-y-3">
-                                <div class="flex items-center justify-between p-3 border-b border-gray-700">
-                                    <div class="flex items-center gap-3">
-                                        <div class="flex items-center justify-center w-8 h-8 bg-blue-500/20 rounded-full">
-                                            <svg class="w-5 h-5 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        </div>
-                                        <span class="font-medium text-gray-300">Kilometraje Actual</span>
-                                    </div>
-                                    <span class="font-bold text-white">{{ motorcycles.mileage }} km</span>
-                                </div>
-                                <div class="flex items-center justify-between p-3">
-                                     <div class="flex items-center gap-3">
-                                        <div class="flex items-center justify-center w-8 h-8 bg-green-500/20 rounded-full">
-                                            <svg class="w-5 h-5 text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                        </div>
-                                        <span class="font-medium text-gray-300">Último Servicio</span>
-                                    </div>
-                                    <span class="font-bold text-white">{{ maintenance_logs.last.date }}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Action Buttons -->
-                        <div class="space-y-3">
-                             <button class="w-full px-4 py-3 text-base font-bold text-center text-orange-400 transition-colors duration-200 border-2 border-orange-400 rounded-lg hover:bg-orange-400 hover:text-gray-900">
-                                Buscar Talleres
-                            </button>
-                            <a href="{% url 'maintenance_add' moto_id=motorcycles.id %}" class="block">
-                                 <button class="w-full px-4 py-3 text-base font-bold text-center text-gray-900 transition-colors duration-200 bg-orange-400 border-2 border-orange-400 rounded-lg hover:bg-orange-500">
-                                Registrar Mantenimiento
-                            </button>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                {% elif motorcycles and not motorcycles.is_active %}
-                <div class="py-16 mt-8 text-center bg-gray-800 rounded-xl">
-                    <div class="flex justify-center mb-4">
-                        <svg class="w-16 h-16 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
-                    </div>
-                    <h3 class="text-xl font-bold">Todas tus motocicletas están inactivas</h3>
-                    <p class="max-w-md mx-auto mt-2 text-gray-400">Activa al menos una moto para empezar a gestionar su mantenimiento y recibir alertas importantes.</p>
-                     <a href="{% url 'motoadd' %}" class="block">
-                        <button class="flex items-center justify-center gap-2 px-4 py-2 mx-auto mt-6 text-base font-bold text-center text-gray-900 transition-colors duration-200 bg-orange-400 border-2 border-orange-400 rounded-lg hover:bg-orange-500">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                        <span>Activar una moto</span>
-                    </button>
-                    </a>
+                {% if main_moto.photo %}
+                    <img src="{{ main_moto.photo.url }}" alt="{{ main_moto.model }}" class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700">
                 {% else %}
-                <!-- 
-                    EMPTY STATE VIEW:
-                    - This section should be shown with conditional logic
-                      when the user has NO registered motorcycles.
-                    - For demonstration purposes, it's included below the default view.
-                -->
-                <div class="py-16 mt-8 text-center bg-gray-800 rounded-xl">
-                    <div class="flex justify-center mb-4">
-                        <svg class="w-16 h-16 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
-                    </div>
-                    <h3 class="text-xl font-bold">Aún no tienes motocicletas registradas</h3>
-                    <p class="max-w-md mx-auto mt-2 text-gray-400">Añade tu primera moto para empezar a gestionar su mantenimiento y recibir alertas importantes.</p>
-                     <a href="{% url 'motoadd' %}" class="block">
-                        <button class="flex items-center justify-center gap-2 px-4 py-2 mx-auto mt-6 text-base font-bold text-center text-gray-900 transition-colors duration-200 bg-orange-400 border-2 border-orange-400 rounded-lg hover:bg-orange-500">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                        <span>Añadir mi primera moto</span>
-                    </button>
-                    </a>
-                </div>
+                    <img src="https://placehold.co/800x400/111827/4b5563?text=Moto" class="absolute inset-0 w-full h-full object-cover opacity-50">
                 {% endif %}
 
+                <div class="relative z-20 p-6 sm:p-8">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="inline-block px-2 py-1 mb-2 text-xs font-bold text-orange-400 bg-orange-400/10 rounded uppercase tracking-wider">Vehículo Principal</span>
+                            <h3 class="text-3xl sm:text-4xl font-bold text-white">{{ main_moto.nickname|default:main_moto.model }}</h3>
+                            <p class="text-gray-300 text-lg">{{ main_moto.make }} {{ main_moto.model }} ({{ main_moto.year }})</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 flex items-end justify-between">
+                        <div>
+                            <p class="text-sm text-gray-400">Kilometraje Actual</p>
+                            <p class="text-3xl font-bold text-white font-mono">{{ main_moto.mileage }} <span class="text-lg text-gray-500">km</span></p>
+                        </div>
+                        <a href="{% url 'motodetails' moto_id=main_moto.id %}" class="px-5 py-2.5 bg-white text-gray-900 font-bold rounded-lg hover:bg-gray-200 transition-colors shadow-lg">
+                            Ver Diagnóstico IA
+                        </a>
+                    </div>
+                </div>
             </div>
+
+            <!-- 3. ACCIONES RÁPIDAS -->
+            <div class="grid grid-cols-2 gap-4">
+                <a href="{% url 'maintenance_add' moto_id=main_moto.id %}" class="flex flex-col items-center justify-center p-4 bg-gray-800 border border-gray-700 rounded-xl hover:bg-gray-700 hover:border-orange-500/50 transition-all group">
+                    <div class="p-3 bg-gray-700 rounded-full text-orange-400 group-hover:bg-orange-500 group-hover:text-white transition-colors mb-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                    </div>
+                    <span class="font-medium text-sm">Registrar Servicio</span>
+                </a>
+                
+                <!-- BOTÓN CAMBIAR MOTO (Abre Modal) -->
+                <button id="open-switch-modal" class="flex flex-col items-center justify-center p-4 bg-gray-800 border border-gray-700 rounded-xl hover:bg-gray-700 hover:border-blue-500/50 transition-all group">
+                    <div class="p-3 bg-gray-700 rounded-full text-blue-400 group-hover:bg-blue-500 group-hover:text-white transition-colors mb-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                    </div>
+                    <span class="font-medium text-sm">Cambiar Moto</span>
+                </button>
+            </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN (1/3 width) -->
+        <div class="space-y-6">
+            
+            <!-- TARJETA DE ACTIVIDAD RECIENTE -->
+            <div class="bg-gray-800 rounded-xl border border-gray-700 p-5 h-full">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-white">Actividad Reciente</h3>
+                    <a href="{% url 'motodetails' moto_id=main_moto.id %}" class="text-xs text-orange-400 hover:underline">Ver todo</a>
+                </div>
+
+                {% if maintenance_logs %}
+                <div class="flow-root">
+                    <ul role="list" class="-my-4 divide-y divide-gray-700">
+                        {% for log in maintenance_logs %}
+                        <li class="py-4">
+                            <div class="flex items-center space-x-4">
+                                <div class="flex-shrink-0">
+                                    <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-gray-700">
+                                        <span class="text-xs font-medium leading-none text-white">{{ log.service_type|slice:":2"|upper }}</span>
+                                    </span>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-white truncate">
+                                        {{ log.get_service_type_display }}
+                                    </p>
+                                    <p class="text-xs text-gray-400">
+                                        {{ log.date|date:"d M, Y" }}
+                                    </p>
+                                </div>
+                                <div class="inline-flex items-center text-xs font-semibold text-gray-500">
+                                    {{ log.mileage_at_service }} km
+                                </div>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% else %}
+                    <div class="text-center py-8">
+                        <p class="text-gray-500 text-sm">No hay registros recientes.</p>
+                    </div>
+                {% endif %}
+            </div>
+
+        </div>
+
+    </div>
+
+    {% else %}
+    
+    <!-- EMPTY STATE VIEW -->
+    <div class="flex flex-col items-center justify-center py-24 text-center bg-gray-800 rounded-2xl border-2 border-dashed border-gray-700">
+        <div class="p-5 bg-gray-700/50 rounded-full mb-6">
+            <svg class="w-16 h-16 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+        </div>
+        <h3 class="text-2xl font-bold text-white">Tu garaje está vacío</h3>
+        <p class="max-w-md mx-auto mt-3 text-gray-400">Para obtener diagnósticos de IA y recordatorios, primero necesitas registrar tu motocicleta.</p>
+        
+        <a href="{% url 'motoadd' %}" class="inline-flex items-center gap-2 px-8 py-4 mt-8 text-base font-bold text-white transition-all duration-200 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl hover:from-orange-600 hover:to-orange-700 shadow-lg shadow-orange-500/20 transform hover:-translate-y-1">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+            <span>Agregar mi primera moto</span>
+        </a>
+    </div>
+
+    {% endif %}
+
+</div>
+
+<!-- MODAL: CAMBIAR MOTO -->
+<div id="switch-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-80 backdrop-blur-sm transition-opacity duration-300">
+    <div class="w-full max-w-lg bg-gray-800 rounded-xl shadow-2xl border border-gray-700 transform transition-all scale-100">
+        
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between p-5 border-b border-gray-700">
+            <h3 class="text-xl font-bold text-white">Selecciona tu Moto Principal</h3>
+            <button id="close-switch-modal" class="text-gray-400 hover:text-white transition-colors p-1 rounded-full hover:bg-gray-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        
+        <!-- Modal Body (Lista de Motos) -->
+        <div class="p-5 max-h-[60vh] overflow-y-auto">
+            {% if motorcycles %}
+            <div class="space-y-3">
+                {% for moto in motorcycles %}
+                
+                <!-- LÓGICA VISUAL: ¿Es esta la moto actual? -->
+                {% if main_moto and main_moto.id == moto.id %}
+                    <!-- Tarjeta SELECCIONADA -->
+                    <div class="flex items-center gap-4 p-3 bg-orange-500/10 rounded-xl border-2 border-orange-500 cursor-default">
+                        <div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-900 border border-orange-500/50">
+                            {% if moto.photo %}
+                                <img src="{{ moto.photo.url }}" alt="{{ moto.model }}" class="w-full h-full object-cover">
+                            {% else %}
+                                <img src="https://placehold.co/100x100/1f2937/4b5563?text=M" class="w-full h-full object-cover">
+                            {% endif %}
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-orange-400">{{ moto.nickname|default:moto.model }}</h4>
+                            <p class="text-xs text-gray-300">{{ moto.make }} {{ moto.model }}</p>
+                        </div>
+                        <span class="px-2 py-1 text-xs font-bold text-gray-900 bg-orange-400 rounded-full">Actual</span>
+                    </div>
+                {% else %}
+                    <!-- Tarjeta NORMAL (Clickeable) -->
+                    <a href="{% url 'switch_moto' moto_id=moto.id %}" class="flex items-center gap-4 p-3 bg-gray-700/30 rounded-xl border border-gray-600 hover:border-gray-400 hover:bg-gray-700 transition-all group">
+                        <div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-900 border border-gray-600 group-hover:border-gray-500">
+                            {% if moto.photo %}
+                                <img src="{{ moto.photo.url }}" alt="{{ moto.model }}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
+                            {% else %}
+                                <img src="https://placehold.co/100x100/1f2937/4b5563?text=M" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
+                            {% endif %}
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-white group-hover:text-white transition-colors">{{ moto.nickname|default:moto.model }}</h4>
+                            <p class="text-xs text-gray-400 group-hover:text-gray-300">{{ moto.make }} {{ moto.model }}</p>
+                        </div>
+                        <div class="p-2 text-gray-500 group-hover:text-white bg-gray-800 rounded-full group-hover:bg-gray-600 transition-all">
+                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                    </a>
+                {% endif %}
+
+                {% endfor %}
+            </div>
+            {% else %}
+                <p class="text-center text-gray-400 py-4">No tienes motos registradas.</p>
+            {% endif %}
+        </div>
+        
+        <!-- Modal Footer -->
+        <div class="p-4 border-t border-gray-700 bg-gray-900/50 rounded-b-xl flex justify-center">
+            <a href="{% url 'motoadd' %}" class="text-sm font-medium text-orange-400 hover:text-orange-300 hover:underline">
+                + Registrar otra moto
+            </a>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modal = document.getElementById('switch-modal');
+        const openBtn = document.getElementById('open-switch-modal');
+        const closeBtn = document.getElementById('close-switch-modal');
+
+        function openModal() {
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            modal.classList.add('hidden');
+        }
+
+        if(openBtn) openBtn.addEventListener('click', openModal);
+        if(closeBtn) closeBtn.addEventListener('click', closeModal);
+
+        // Cerrar si clic afuera
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) closeModal();
+        });
+    });
+</script>
+
 {% endblock %}

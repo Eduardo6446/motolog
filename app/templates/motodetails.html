@@ -1,134 +1,229 @@
-{% extends "layout.html" %}
+{% extends "base.html" %}
+
 {% block content %}
 
 <div class="p-4 mx-auto max-w-7xl sm:p-6 lg:p-8">
-                <!-- Header -->
-                <div class="flex items-center justify-between pb-6 mb-6 border-b border-gray-700">
-                    <div>
-                        <a href="#" class="text-sm text-orange-400 hover:underline">&larr; Back to Garage</a>
-                        <h2 class="text-3xl font-bold">Suzuki Gixxer 250</h2>
-                    </div>
-                    <button class="flex items-center gap-2 px-4 py-2 text-white transition-colors duration-200 bg-gray-700 rounded-lg hover:bg-gray-600">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L13.196 7.196z"></path></svg>
-                        <span class="hidden sm:inline">Edit</span>
-                    </button>
-                </div>
+    
+    <!-- 1. ENCABEZADO -->
+    <div class="flex items-center justify-between pb-6 mb-6 border-b border-gray-700">
+        <div>
+            <a href="{% url 'garage' %}" class="text-sm text-orange-400 hover:underline">&larr; Volver al Garaje</a>
+            <h2 class="mt-1 text-3xl font-bold text-white">{{ motorcycle.nickname|default:motorcycle.model }}</h2>
+            <p class="text-gray-400">{{ motorcycle.make }} {{ motorcycle.model }} ({{ motorcycle.year }})</p>
+        </div>
+        
+        <div class="flex gap-3">
+            <a href="{% url 'maintenance_add' moto_id=motorcycle.id %}" class="flex items-center gap-2 px-4 py-2 text-sm font-bold text-gray-900 transition-colors bg-orange-500 rounded-lg hover:bg-orange-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                <span class="hidden sm:inline">Nuevo Mantenimiento</span>
+            </a>
+        </div>
+    </div>
 
-                <!-- Layout Grid for Details and History -->
-                <div class="grid grid-cols-1 gap-8 lg:grid-cols-5">
+    <!-- 2. GRID PRINCIPAL -->
+    <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
 
-                    <!-- Left Column: Image and Stats -->
-                    <div class="flex flex-col gap-8 lg:col-span-2">
-                        <div class="overflow-hidden bg-gray-800 rounded-xl">
-                             <img src="https://placehold.co/600x400/111827/f97316?text=Gixxer+250" 
-                                 alt="Suzuki Gixxer 250" 
-                                 class="object-cover w-full h-64">
-                        </div>
-                        <div class="p-4 bg-gray-800 rounded-xl">
-                            <h3 class="mb-4 text-xl font-bold">Vehicle Details</h3>
-                            <div class="space-y-3">
-                                <div class="flex justify-between">
-                                    <span class="text-gray-400">Make</span>
-                                    <span class="font-medium">Suzuki</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-400">Year</span>
-                                    <span class="font-medium">2024</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-400">Mileage</span>
-                                    <span class="font-medium">8,900 km</span>
+        <!-- COLUMNA IZQUIERDA: FOTO Y DATOS BÁSICOS -->
+        <div class="lg:col-span-1 space-y-6">
+            <!-- Tarjeta de Foto -->
+            <div class="overflow-hidden bg-gray-800 border border-gray-700 rounded-2xl shadow-lg group relative">
+                <div class="relative h-64 bg-gray-900">
+                    {% if motorcycle.photo %}
+                        <img src="{{ motorcycle.photo.url }}" alt="{{ motorcycle.model }}" class="object-cover w-full h-full">
+                    {% else %}
+                        <img src="https://placehold.co/600x400/111827/f97316?text={{ motorcycle.model }}" class="object-cover w-full h-full opacity-50">
+                    {% endif %}
+                    
+                    <!-- Overlay de Kilometraje -->
+                    <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent">
+                        <div class="flex items-end justify-between">
+                            <div class="flex items-center gap-2 text-white">
+                                <svg class="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                <div>
+                                    <p class="text-xs text-gray-400 uppercase font-bold tracking-wider">Odómetro</p>
+                                    <span class="text-3xl font-bold font-mono tracking-tight">{{ motorcycle.mileage }}</span>
+                                    <span class="text-sm text-gray-400">km</span>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Right Column: Maintenance History -->
-                    <div class="lg:col-span-3">
-                        <div class="p-4 bg-gray-800 rounded-xl">
-                            <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-xl font-bold">Maintenance History</h3>
-                                <button class="px-4 py-2 text-sm font-bold text-gray-900 transition-colors duration-200 bg-orange-400 rounded-lg hover:bg-orange-500">
-                                    Add Maintenance
-                                </button>
-                            </div>
-                            <div class="flow-root">
-                                <ul role="list" class="-mb-8">
-                                    <!-- Maintenance Item 1 -->
-                                    <li>
-                                        <div class="relative pb-8">
-                                            <div class="relative flex items-start space-x-3">
-                                                <div>
-                                                    <div class="relative px-1">
-                                                        <div class="flex items-center justify-center w-8 h-8 bg-blue-500/20 rounded-full ring-8 ring-gray-800">
-                                                            <svg class="w-5 h-5 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="flex-1 min-w-0">
-                                                    <div>
-                                                        <p class="font-medium text-white">Brake Change</p>
-                                                        <p class="mt-0.5 text-sm text-gray-400">June 10, 2025</p>
-                                                    </div>
-                                                </div>
-                                                <div class="flex-shrink-0 text-sm text-right text-gray-400">
-                                                    <p>8,500 km</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </li>
-                                    <!-- Maintenance Item 2 -->
-                                    <li>
-                                        <div class="relative pb-8">
-                                            <div class="relative flex items-start space-x-3">
-                                                 <div>
-                                                    <div class="relative px-1">
-                                                        <div class="flex items-center justify-center w-8 h-8 bg-green-500/20 rounded-full ring-8 ring-gray-800">
-                                                            <svg class="w-5 h-5 text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="flex-1 min-w-0">
-                                                    <div>
-                                                        <p class="font-medium text-white">Oil Change</p>
-                                                        <p class="mt-0.5 text-sm text-gray-400">January 15, 2025</p>
-                                                    </div>
-                                                </div>
-                                                <div class="flex-shrink-0 text-sm text-right text-gray-400">
-                                                    <p>8,200 km</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </li>
-                                    <!-- Maintenance Item 3 (Last Item) -->
-                                     <li>
-                                        <div class="relative pb-8">
-                                            <!-- No timeline line on the last item -->
-                                            <div class="relative flex items-start space-x-3">
-                                                 <div>
-                                                    <div class="relative px-1">
-                                                        <div class="flex items-center justify-center w-8 h-8 bg-purple-500/20 rounded-full ring-8 ring-gray-800">
-                                                             <svg class="w-5 h-5 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H4a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="flex-1 min-w-0">
-                                                    <div>
-                                                        <p class="font-medium text-white">Tire Replacement</p>
-                                                        <p class="mt-0.5 text-sm text-gray-400">August 22, 2024</p>
-                                                    </div>
-                                                </div>
-                                                <div class="flex-shrink-0 text-sm text-right text-gray-400">
-                                                    <p>7,000 km</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </li>
-                                </ul>
-                            </div>
+                            
+                            <!-- Botón para Editar Kilometraje -->
+                            <button id="btn-update-km" class="p-2 bg-gray-700/80 hover:bg-orange-500 text-white rounded-lg backdrop-blur-sm transition-all shadow-lg border border-gray-600 hover:border-orange-400" title="Actualizar Kilometraje">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L13.196 7.196z"></path></svg>
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Estado General (Resumen IA) -->
+            {% if error_api %}
+            <div class="p-4 border border-red-700 bg-red-900/20 rounded-xl">
+                <h4 class="flex items-center gap-2 font-bold text-red-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    IA Desconectada
+                </h4>
+                <p class="mt-1 text-sm text-red-200">{{ error_api }}</p>
+            </div>
+            {% else %}
+            <div class="p-6 bg-gray-800 border border-gray-700 rounded-2xl">
+                <h3 class="mb-4 text-lg font-bold text-white flex items-center gap-2">
+                    <span class="relative flex h-3 w-3">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                    </span>
+                    Sistema MotoIA Activo
+                </h3>
+                <p class="text-sm text-gray-400">
+                    Tu motocicleta está siendo monitoreada por nuestra Inteligencia Artificial. Los cálculos se actualizan automáticamente con cada cambio en el odómetro.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- COLUMNA DERECHA: DIAGNÓSTICO DETALLADO -->
+        <div class="lg:col-span-2">
+            <h3 class="mb-4 text-xl font-bold text-white">Diagnóstico de Componentes</h3>
+            
+            {% if predicciones %}
+            <div class="grid gap-4">
+                {% for item in predicciones %}
+                <!-- Tarjeta de Componente -->
+                <div class="p-5 transition-all duration-300 bg-gray-800 border border-gray-700 rounded-xl hover:border-gray-500">
+                    <div class="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
+                        
+                        <!-- Info Componente -->
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="text-lg font-bold text-white capitalize">{{ item.componente }}</h4>
+                                
+                                <!-- Badge de Estado IA -->
+                                {% if item.prediccion_ia.estado_probable == "fallo_critico" %}
+                                    <span class="px-3 py-1 text-xs font-bold text-red-900 bg-red-200 rounded-full animate-pulse">¡CRÍTICO!</span>
+                                {% elif item.prediccion_ia.estado_probable == "muy_desgastado" %}
+                                    <span class="px-3 py-1 text-xs font-bold text-orange-900 bg-orange-200 rounded-full">Atención Requerida</span>
+                                {% elif item.prediccion_ia.estado_probable == "desgaste_normal" %}
+                                    <span class="px-3 py-1 text-xs font-bold text-blue-900 bg-blue-200 rounded-full">Desgaste Normal</span>
+                                {% else %}
+                                    <span class="px-3 py-1 text-xs font-bold text-green-900 bg-green-200 rounded-full">Excelente</span>
+                                {% endif %}
+                            </div>
+
+                            <!-- Barra de Urgencia (Cálculo Híbrido) -->
+                            <div class="mb-2">
+                                <div class="flex justify-between mb-1 text-xs text-gray-400">
+                                    <span>Vida Útil Consumida</span>
+                                    <span>{{ item.calculo.urgencia}}x Factor de Uso</span>
+                                </div>
+                                <div class="w-full h-3 bg-gray-900 rounded-full overflow-hidden">
+                                    <div class="h-full rounded-full transition-all duration-1000 
+                                        {% if item.calculo.urgencia > 0.9 %} bg-red-500 
+                                        {% elif item.calculo.urgencia > 0.7 %} bg-orange-500 
+                                        {% else %} bg-green-500 {% endif %}"
+                                        style="width: min({{ item.calculo.urgencia }} * 100, 100)%">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <p class="text-xs text-gray-500 italic">
+                                Fuente: {{ item.calculo.origen_dato|title|cut:"_" }} • Confianza IA: {{ item.prediccion_ia.confianza }}%
+                            </p>
+                        </div>
+
+                        <!-- Botón Acción Rápida -->
+                        <div class="flex items-center">
+                            <form action="{% url 'maintenance_add' moto_id=motorcycle.id %}" method="GET">
+                                <button type="submit" class="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors" title="Registrar Mantenimiento">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                </button>
+                            </form>
+                        </div>
+
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            {% else %}
+            <!-- Estado Vacío -->
+            <div class="py-12 text-center bg-gray-800/50 border border-dashed border-gray-700 rounded-xl">
+                <svg class="w-12 h-12 mx-auto text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                <p class="text-gray-400">No hay datos de diagnóstico disponibles.</p>
+                <p class="text-xs text-gray-500 mt-1">Asegúrate de que el modelo de tu moto sea compatible con MotoIA.</p>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: ACTUALIZAR KILOMETRAJE -->
+<div id="km-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-75 backdrop-blur-sm">
+    <div class="w-full max-w-md p-6 bg-gray-800 rounded-xl shadow-2xl border border-gray-700 transform transition-all scale-100">
+        <div class="flex items-center justify-between pb-4 border-b border-gray-700">
+            <h3 class="text-xl font-bold text-white">Actualizar Odómetro</h3>
+            <button id="close-km-modal" class="text-gray-400 hover:text-white transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        
+        <form action="{% url 'update_mileage' moto_id=motorcycle.id %}" method="POST" class="mt-6">
+            {% csrf_token %}
+            <div class="mb-6">
+                <label for="new_mileage" class="block text-sm font-medium text-gray-300 mb-2">Nuevo Kilometraje</label>
+                <div class="relative">
+                    <input type="number" name="new_mileage" id="new_mileage" required 
+                           min="{{ motorcycle.mileage }}" 
+                           value="{{ motorcycle.mileage }}"
+                           class="block w-full pl-4 pr-12 py-3 text-xl font-mono text-white bg-gray-900 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                           placeholder="Ej: 13000">
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                        <span class="text-gray-500 font-bold">km</span>
+                    </div>
+                </div>
+                <p class="mt-2 text-xs text-gray-500">
+                    Actualizar esto recalculará el desgaste de todas las piezas automáticamente.
+                </p>
+            </div>
+
+            <div class="flex justify-end gap-3">
+                <button type="button" id="cancel-km-modal" class="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors">
+                    Cancelar
+                </button>
+                <button type="submit" class="px-6 py-2 text-sm font-bold text-gray-900 bg-orange-500 rounded-lg hover:bg-orange-600 transition-colors shadow-lg shadow-orange-500/20">
+                    Guardar y Recalcular
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modal = document.getElementById('km-modal');
+        const openBtn = document.getElementById('btn-update-km');
+        const closeBtn = document.getElementById('close-km-modal');
+        const cancelBtn = document.getElementById('cancel-km-modal');
+        const kmInput = document.getElementById('new_mileage');
+
+        function openModal() {
+            modal.classList.remove('hidden');
+            // Pequeño delay para enfocar el input
+            setTimeout(() => kmInput.focus(), 100); 
+        }
+
+        function closeModal() {
+            modal.classList.add('hidden');
+        }
+
+        if(openBtn) openBtn.addEventListener('click', openModal);
+        if(closeBtn) closeBtn.addEventListener('click', closeModal);
+        if(cancelBtn) cancelBtn.addEventListener('click', closeModal);
+
+        // Cerrar si clic afuera
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) closeModal();
+        });
+    });
+</script>
 
 {% endblock %}

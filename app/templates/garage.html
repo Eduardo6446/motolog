@@ -1,96 +1,97 @@
-{% extends "layout.html" %}
+{% extends "base.html" %}
 
 {% block content %}
 
-            <div class="p-4 mx-auto max-w-7xl sm:p-6 lg:p-8">
-                <!-- Header -->
-                <div class="flex flex-col items-center justify-between pb-6 mb-6 border-b border-gray-700 sm:flex-row">
-                    <h2 class="text-3xl font-bold">My Garage</h2>
-                    <a href="{% url 'motoadd' %}" class="flex items-center justify-center w-full gap-2 px-4 py-2 mt-4 text-base font-bold text-center text-gray-900 transition-colors duration-200 bg-orange-400 border-2 border-orange-400 rounded-lg sm:mt-0 sm:w-auto hover:bg-orange-500">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                        <span>Add New Motorcycle</span>
-                    </a>
-                </div>
+<div class="p-4 mx-auto max-w-7xl sm:p-6 lg:p-8">
+    <!-- Header -->
+    <div class="flex flex-col items-center justify-between pb-6 mb-6 border-b border-gray-700 sm:flex-row">
+        <div>
+            <h2 class="text-3xl font-bold">Mi Garaje</h2>
+            <p class="mt-1 text-sm text-gray-400">Gestiona y monitorea el estado de tus vehículos.</p>
+        </div>
+        
+        <a href="{% url 'motoadd' %}" class="flex items-center justify-center w-full gap-2 px-4 py-2 mt-4 text-base font-bold text-center text-white transition-colors duration-200 bg-orange-500 border border-transparent rounded-lg sm:mt-0 sm:w-auto hover:bg-orange-600 shadow-lg shadow-orange-500/20">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+            <span>Agregar Motocicleta</span>
+        </a>
+    </div>
 
-                <!-- 
-                    MOTORCYCLE GRID: 
-                    - Shows registered motorcycles.
-                    - Is responsive and adapts to screen size.
-                -->
-                {% if motorcycles %}
-
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                    {% for motorcycle in motorcycles %}
-                    <!-- Active Motorcycle Card -->
-                    <a href="{% url 'motodetails' moto_id=1 %}" class="no-underline" id='bikes'>
-                        {% if motorcycle.is_active %}
-                        <div class="flex flex-col overflow-hidden transition-transform duration-200 bg-gray-800 border-2 border-orange-400 rounded-xl hover:-translate-y-1">
-                        <div class="relative">
-                            {% if motorcycle.photo %}
-                                <!--<img src="{{ motorcycle.photo.url }}" 
-                                     alt="{{ motorcycle.make }} {{ motorcycle.model }}" 
-                                     class="object-cover w-full h-32">}-->
-
-                                     
-                            <img src="https://placehold.co/400x300/111827/4b5563?text= {{ motorcycle.make }} {{ motorcycle.model }}" 
-                                 alt="{{ motorcycle.make }} {{ motorcycle.model }}" 
-                                 class="object-cover w-full h-32">
-                            {% else %}
-                            <img src="https://placehold.co/400x300/111827/4b5563?text= {{ motorcycle.make }} {{ motorcycle.model }}" 
-                                 alt="{{ motorcycle.make }} {{ motorcycle.model }}" 
-                                 class="object-cover w-full h-32">
-                            {% endif %}
-
-                            <div class="absolute top-0 left-0 px-3 py-1 text-xs font-bold bg-orange-400 rounded-br-lg text-gray-900">
-                                Active
-                            </div>
-                            
-                        </div>
-                        <div class="p-4">
-                            <p class="text-sm text-gray-400">{{ motorcycle.make }}</p>
-                            <h4 class="font-bold">{{ motorcycle.model }} ({{ motorcycle.year }})</h4>
-                        </div>
-                    </div>
-                    </a>
+    <!-- 
+        MOTORCYCLE GRID
+    -->
+    {% if motorcycles %}
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        {% for motorcycle in motorcycles %}
+        
+        <!-- Active Motorcycle Card -->
+        <a href="{% url 'motodetails' moto_id=motorcycle.id %}" class="group relative block h-full no-underline">
+            <div class="flex flex-col h-full overflow-hidden transition-all duration-300 bg-gray-800 border border-gray-700 rounded-xl group-hover:border-orange-500/50 group-hover:shadow-xl group-hover:shadow-orange-500/10 group-hover:-translate-y-1">
+                
+                <!-- Image Container -->
+                <div class="relative h-48 overflow-hidden bg-gray-900">
+                    {% if motorcycle.photo %}
+                        <img src="{{ motorcycle.photo.url }}" 
+                             alt="{{ motorcycle.make }} {{ motorcycle.model }}" 
+                             class="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110">
                     {% else %}
-                    <!-- Inactive Motorcycle Card -->
-                    <div class="flex flex-col overflow-hidden bg-gray-800 border-2 border-gray-600 rounded-xl">
-                        <div class="relative">
-                            <img src="https://placehold.co/400x300/111827/4b5563?text= {{ motorcycle.make }} {{ motorcycle.model }}" 
-                                 alt="{{ motorcycle.make }} {{ motorcycle.model }}" 
-                                 class="object-cover w-full h-32">
-                            <div class="absolute top-0 left-0 px-3 py-1 text-xs font-bold bg-gray-600 rounded-br-lg text-gray-300">
-                                Inactive
-                            </div>
-                        </div>
-                        <div class="p-4">
-                            <p class="text-sm text-gray-400">{{ motorcycle.make }}</p>
-                            <h4 class="font-bold">{{ motorcycle.model }} ({{ motorcycle.year }})</h4>
-                        </div>
-                    </div>
+                        <!-- Placeholder si no hay foto -->
+                        <img src="https://placehold.co/400x300/1f2937/4b5563?text={{ motorcycle.make }}+{{ motorcycle.model }}" 
+                             alt="No photo" 
+                             class="object-cover w-full h-full opacity-50">
                     {% endif %}
-                    {% endfor %}
-                </div>
-                {% else %}
-                <!--
-                    EMPTY STATE:
-                    - This section should be shown with conditional logic
-                      when there are no registered motorcycles.
-                    - For demonstration, it's included here.
-                -->
-                <div class="py-16 mt-8 text-center bg-gray-800 rounded-xl">
-                    <div class="flex justify-center mb-4">
-                        <svg class="w-16 h-16 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
-                    </div>
-                    <h3 class="text-xl font-bold">Your garage is empty</h3>
-                    <p class="max-w-md mx-auto mt-2 text-gray-400">Register your motorcycle to start managing its maintenance and receive alerts.</p>
-                     <button class="flex items-center justify-center gap-2 px-4 py-2 mx-auto mt-6 text-base font-bold text-center text-gray-900 transition-colors duration-200 bg-orange-400 border-2 border-orange-400 rounded-lg hover:bg-orange-500">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                        <span>Add my first motorcycle</span>
-                    </button>
-                </div>
-                {% endif %}
 
+                    <!-- Status Badge -->
+                    <div class="absolute top-0 right-0 px-3 py-1 m-2 text-xs font-bold rounded-full 
+                        {% if motorcycle.is_active %} bg-green-500/20 text-green-400 border border-green-500/30
+                        {% else %} bg-gray-600/20 text-gray-400 border border-gray-600/30 {% endif %} backdrop-blur-md">
+                        {% if motorcycle.is_active %} Activa {% else %} Inactiva {% endif %}
+                    </div>
+                    
+                    <!-- Gradient Overlay -->
+                    <div class="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-transparent to-transparent"></div>
+                </div>
+
+                <!-- Content -->
+                <div class="flex flex-col flex-1 p-4">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <p class="text-xs font-medium tracking-wider text-orange-400 uppercase">{{ motorcycle.make }}</p>
+                            <h4 class="mt-1 text-lg font-bold text-white group-hover:text-orange-100">{{ motorcycle.model }}</h4>
+                        </div>
+                        <span class="px-2 py-1 text-xs font-medium text-gray-400 bg-gray-700 rounded">{{ motorcycle.year }}</span>
+                    </div>
+                    
+                    {% if motorcycle.nickname %}
+                    <p class="mt-2 text-sm text-gray-400 italic">"{{ motorcycle.nickname }}"</p>
+                    {% endif %}
+
+                    <div class="mt-auto pt-4 flex items-center gap-2 text-sm text-gray-500">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        <span>{{ motorcycle.mileage }} km</span>
+                    </div>
+                </div>
             </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <!--
+        EMPTY STATE
+    -->
+    <div class="flex flex-col items-center justify-center py-20 mt-8 text-center bg-gray-800/50 border-2 border-dashed border-gray-700 rounded-2xl">
+        <div class="p-4 mb-4 bg-gray-800 rounded-full">
+            <svg class="w-12 h-12 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+        </div>
+        <h3 class="text-xl font-bold text-white">Tu garaje está vacío</h3>
+        <p class="max-w-md mx-auto mt-2 text-gray-400">Registra tu primera motocicleta para comenzar a gestionar sus mantenimientos y recibir alertas inteligentes.</p>
+        <a href="{% url 'motoadd' %}" class="flex items-center justify-center gap-2 px-6 py-3 mt-8 text-base font-bold text-white transition-all duration-200 bg-orange-500 rounded-lg hover:bg-orange-600 hover:shadow-lg hover:shadow-orange-500/20">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+            <span>Agregar mi primera moto</span>
+        </a>
+    </div>
+    {% endif %}
+
+</div>
 
 {% endblock %}

@@ -1,175 +1,223 @@
-{% extends "layout.html" %}
+{% extends "base.html" %}
 
 {% block content %}
 
 <div class="p-4 mx-auto max-w-2xl sm:p-6 lg:p-8">
-                <!-- Header -->
-                <div class="pb-6 mb-6">
-                    <a href="#" class="text-sm text-orange-400 hover:underline">&larr; Volver al Historial</a>
-                    <h2 class="mt-2 text-3xl font-bold">Registrar Nuevo Mantenimiento</h2>
-                    <p class="text-gray-400">Añade los detalles del servicio realizado a tu <span class="font-bold text-orange-400">{{ motorcycle.make }} {{ motorcycle.model }}</span>.</p>
-                </div>
-
-                <!-- Add Maintenance Form -->
-                <form action="{% url 'maintenance_add' motorcycle.id %}" method="POST" class="p-6 space-y-6 bg-gray-800 rounded-xl" id="maintenance-form">
-                {% csrf_token %}
-                    <!-- Form Fields Grid -->
-                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                        <!-- Tipo de Servicio -->
-                        <div class="sm:col-span-2">
-                            <label for="service-type" class="block text-sm font-medium text-gray-300">Tipo de Servicio</label>
-                            <select id="service-type" name="service-type" class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm">
-                                <option>Selecciona un servicio...</option>
-                                <option value="oil_change">Cambio de Aceite</option>
-                                <option value="brake_service">Servicio de Frenos</option>
-                                <option value="tire_replacement">Cambio de Llantas</option>
-                                <option value="chain_service">Servicio de Cadena</option>
-                                <option value="general_checkup">Revisión General</option>
-                                <option value="other">Otro</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Fecha del Servicio -->
-                        <div>
-                            <label for="date" class="block text-sm font-medium text-gray-300">Fecha del Servicio</label>
-                            <input type="date" name="date" id="date" class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm" style="color-scheme: dark;">
-                        </div>
-
-                        <!-- Kilometraje en el Servicio -->
-                        <div>
-                            <label for="mileage-at-service" class="block text-sm font-medium text-gray-300">Kilometraje en el Servicio</label>
-                            <input type="number" name="mileage-at-service" id="mileage-at-service" placeholder="e.g., 9100" class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm">
-                        </div>
-                        
-                        <!-- Costo (Opcional) -->
-                        <div class="sm:col-span-2">
-                            <label for="cost" class="block text-sm font-medium text-gray-300">Costo (Opcional)</label>
-                            <div class="relative mt-1 rounded-md shadow-sm">
-                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                    <span class="text-gray-500 sm:text-sm">$</span>
-                                </div>
-                                <input type="number" name="cost" id="cost" step="0.01" class="block w-full py-2 pl-7 pr-12 text-white bg-gray-700 border-gray-600 rounded-md focus:ring-orange-500 focus:border-orange-500" placeholder="0.00">
-                                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                    <span class="text-gray-500 sm:text-sm">NIO</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Notas Adicionales -->
-                        <div class="sm:col-span-2">
-                             <label for="notes" class="block text-sm font-medium text-gray-300">Notas Adicionales (Opcional)</label>
-                             <textarea id="notes" name="notes" rows="4" class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm" placeholder="Añade detalles como el tipo de aceite usado, marca de las llantas, etc."></textarea>
-                        </div>
-                    </div>
-
-                    <!-- Botones de Acción -->
-                   <div class="pt-5">
-                        <div class="flex justify-end">
-                            <button type="button" class="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-transparent rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-orange-500">
-                                Cancelar
-                            </button>
-                            <button type="button" id="open-reminder-modal-button" class="inline-flex justify-center px-4 py-2 ml-3 text-sm font-bold text-gray-900 bg-orange-400 border border-transparent rounded-md shadow-sm hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-orange-500">
-                                Guardar Mantenimiento
-                            </button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </main>
+    <!-- Header -->
+    <div class="pb-6 mb-6">
+        <a href="{% url 'motodetails' moto_id=motorcycle.id %}" class="text-sm text-orange-400 hover:underline">&larr; Volver al Historial</a>
+        <h2 class="mt-2 text-3xl font-bold">Registrar Nuevo Mantenimiento</h2>
+        <p class="text-gray-400">Añade los detalles del servicio realizado a tu <span class="font-bold text-orange-400">{{ motorcycle.make }} {{ motorcycle.model }}</span>.</p>
     </div>
 
-    <!-- Reminder Modal -->
-    <div id="reminder-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-75">
-        <div class="w-full max-w-lg p-6 bg-gray-800 rounded-xl shadow-xl">
-            <div class="flex items-center justify-between pb-3 border-b border-gray-700">
-                <h3 class="text-xl font-bold">Programar Recordatorio de Mantenimiento</h3>
-                <button id="close-modal-button" class="p-1 text-gray-400 rounded-full hover:bg-gray-700 hover:text-white">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
+    <!-- Add Maintenance Form -->
+    <form action="{% url 'maintenance_add' moto_id=motorcycle.id %}" method="POST" class="p-6 space-y-6 bg-gray-800 rounded-xl border border-gray-700" id="maintenance-form">
+        {% csrf_token %}
+        <!-- Form Fields Grid -->
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <!-- Tipo de Servicio -->
+            <div class="sm:col-span-2">
+                <label for="service-type" class="block text-sm font-medium text-gray-300">Tipo de Servicio</label>
+                <select id="service-type" name="service-type" required class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm">
+                    <option value="" disabled selected>Selecciona un servicio...</option>
+                    <option value="aceite_motor">Cambio de Aceite de Motor</option>
+                    <option value="filtro_aceite">Cambio de Filtro de Aceite</option>
+                    <option value="filtro_aire">Limpieza/Cambio Filtro de Aire</option>
+                    <option value="bujias">Cambio de Bujías</option>
+                    <option value="kit_arrastre">Mantenimiento Kit de Arrastre</option>
+                    <option value="frenos_delanteros">Frenos Delanteros</option>
+                    <option value="frenos_traseros">Frenos Traseros</option>
+                    <option value="neumaticos">Cambio de Neumáticos</option>
+                    <option value="bateria">Batería</option>
+                    <option value="ajuste_valvulas">Ajuste de Válvulas</option>
+                    <option value="suspension">Mantenimiento de Suspensión</option>
+                    <option value="other">Otro</option>
+                </select>
+                <p class="mt-1 text-xs text-gray-500">Selecciona el componente exacto para ayudar a la IA.</p>
             </div>
-            
-            <div class="mt-4">
-                <p class="text-sm text-gray-400">Opcional: ¿Deseas crear un recordatorio para el próximo servicio?</p>
 
-                <div class="mt-4 space-y-4">
-                     <div>
-                        <label for="reminder-type" class="block text-sm font-medium text-gray-300">Tipo de Recordatorio</label>
-                        <select id="reminder-type" name="reminder-type" class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm">
-                            <option value="none">No crear recordatorio</option>
-                            <option value="distance">Por Distancia (km)</option>
-                            <option value="date">Por Fecha</option>
-                        </select>
+            <!-- Fecha del Servicio -->
+            <div>
+                <label for="date" class="block text-sm font-medium text-gray-300">Fecha del Servicio</label>
+                <input type="date" name="date" id="date" required class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm" style="color-scheme: dark;">
+            </div>
+
+            <!-- Kilometraje en el Servicio -->
+            <div>
+                <label for="mileage-at-service" class="block text-sm font-medium text-gray-300">Kilometraje en el Servicio</label>
+                <input type="number" name="mileage-at-service" id="mileage-at-service" placeholder="e.g., 9100" required class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm">
+            </div>
+
+            <!-- FEEDBACK PARA LA IA (NUEVO) -->
+            <div class="sm:col-span-2 p-4 bg-gray-900/50 rounded-lg border border-gray-600 border-dashed">
+                <label class="block text-sm font-medium text-orange-400 mb-2">
+                    🤖 Ayuda a la IA: ¿En qué estado estaba la pieza?
+                </label>
+                <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <!-- Opción 1: Como Nuevo -->
+                    <div class="relative">
+                        <input class="sr-only peer" type="radio" name="condicion_reportada" id="cond_nuevo" value="como_nuevo">
+                        <label class="flex flex-col items-center justify-center p-2 text-gray-400 bg-gray-800 border border-gray-600 rounded-lg cursor-pointer peer-checked:border-green-500 peer-checked:text-green-500 hover:bg-gray-700 transition-all" for="cond_nuevo">
+                            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span class="text-xs font-medium">Como Nuevo</span>
+                        </label>
                     </div>
-
-                    <div id="distance-field" class="hidden">
-                        <label for="next-service-mileage" class="block text-sm font-medium text-gray-300">Próximo servicio en (km)</label>
-                        <input type="number" name="next-service-mileage" id="next-service-mileage" placeholder="e.g., 5000" class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm">
+                    <!-- Opción 2: Normal -->
+                    <div class="relative">
+                        <input class="sr-only peer" type="radio" name="condicion_reportada" id="cond_normal" value="desgaste_normal">
+                        <label class="flex flex-col items-center justify-center p-2 text-gray-400 bg-gray-800 border border-gray-600 rounded-lg cursor-pointer peer-checked:border-blue-500 peer-checked:text-blue-500 hover:bg-gray-700 transition-all" for="cond_normal">
+                            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <span class="text-xs font-medium">Normal</span>
+                        </label>
                     </div>
-
-                    <div id="date-field" class="hidden">
-                         <label for="next-service-date" class="block text-sm font-medium text-gray-300">Fecha del próximo servicio</label>
-                         <input type="date" name="next-service-date" id="next-service-date" class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm" style="color-scheme: dark;">
+                    <!-- Opción 3: Muy Desgastado -->
+                    <div class="relative">
+                        <input class="sr-only peer" type="radio" name="condicion_reportada" id="cond_desgastado" value="muy_desgastado">
+                        <label class="flex flex-col items-center justify-center p-2 text-gray-400 bg-gray-800 border border-gray-600 rounded-lg cursor-pointer peer-checked:border-orange-500 peer-checked:text-orange-500 hover:bg-gray-700 transition-all" for="cond_desgastado">
+                            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            <span class="text-xs font-medium">Muy Usado</span>
+                        </label>
+                    </div>
+                    <!-- Opción 4: Fallo Crítico -->
+                    <div class="relative">
+                        <input class="sr-only peer" type="radio" name="condicion_reportada" id="cond_fallo" value="fallo_critico">
+                        <label class="flex flex-col items-center justify-center p-2 text-gray-400 bg-gray-800 border border-gray-600 rounded-lg cursor-pointer peer-checked:border-red-500 peer-checked:text-red-500 hover:bg-gray-700 transition-all" for="cond_fallo">
+                            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                            <span class="text-xs font-medium">Fallo/Roto</span>
+                        </label>
                     </div>
                 </div>
             </div>
 
-            <div class="flex justify-end pt-6 mt-6 border-t border-gray-700 space-x-3">
-                 <button type="button" id="save-without-reminder-button" class="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-transparent rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-orange-500">
-                    Guardar sin Recordatorio
-                </button>
-                <button type="submit" form="maintenance-form" id="save-with-reminder-button" class="inline-flex justify-center px-4 py-2 text-sm font-bold text-gray-900 bg-orange-400 border border-transparent rounded-md shadow-sm hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-orange-500">
-                    Guardar y Crear Recordatorio
+            <!-- Costo (Opcional) -->
+            <div class="sm:col-span-2">
+                <label for="cost" class="block text-sm font-medium text-gray-300">Costo (Opcional)</label>
+                <div class="relative mt-1 rounded-md shadow-sm">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <span class="text-gray-500 sm:text-sm">$</span>
+                    </div>
+                    <input type="number" name="cost" id="cost" step="0.01" class="block w-full py-2 pl-7 pr-12 text-white bg-gray-700 border-gray-600 rounded-md focus:ring-orange-500 focus:border-orange-500" placeholder="0.00">
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                        <span class="text-gray-500 sm:text-sm">NIO</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notas Adicionales -->
+            <div class="sm:col-span-2">
+                 <label for="notes" class="block text-sm font-medium text-gray-300">Notas Adicionales (Opcional)</label>
+                 <textarea id="notes" name="notes" rows="4" class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm" placeholder="Detalles de la marca, taller, etc."></textarea>
+            </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="pt-5 border-t border-gray-700">
+            <div class="flex justify-end gap-3">
+                <a href="{% url 'motodetails' moto_id=motorcycle.id %}" class="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-transparent rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-gray-500 transition-colors">
+                    Cancelar
+                </a>
+                <button type="button" id="open-reminder-modal-button" class="inline-flex justify-center px-4 py-2 text-sm font-bold text-gray-900 bg-orange-400 border border-transparent rounded-md shadow-sm hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-orange-500 transition-colors">
+                    Continuar
                 </button>
             </div>
         </div>
+    </form>
+</div>
+
+<!-- Reminder Modal (Sin Cambios en Estructura, solo estilos) -->
+<div id="reminder-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-75 backdrop-blur-sm">
+    <div class="w-full max-w-lg p-6 bg-gray-800 rounded-xl shadow-2xl border border-gray-700">
+        <div class="flex items-center justify-between pb-3 border-b border-gray-700">
+            <h3 class="text-xl font-bold text-white">Programar Recordatorio</h3>
+            <button id="close-modal-button" class="p-1 text-gray-400 rounded-full hover:bg-gray-700 hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        
+        <div class="mt-4">
+            <p class="text-sm text-gray-400">¿Quieres que te avisemos para el próximo servicio?</p>
+
+            <div class="mt-4 space-y-4">
+                  <div>
+                    <label for="reminder-type" class="block text-sm font-medium text-gray-300">Tipo de Recordatorio</label>
+                    <select id="reminder-type" name="reminder-type" form="maintenance-form" class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm">
+                        <option value="none">No crear recordatorio</option>
+                        <option value="distance">Por Distancia (km)</option>
+                        <option value="date">Por Fecha</option>
+                    </select>
+                </div>
+
+                <div id="distance-field" class="hidden">
+                    <label for="next-service-mileage" class="block text-sm font-medium text-gray-300">Avisar dentro de (km)</label>
+                    <input type="number" name="next-service-mileage" id="next-service-mileage" form="maintenance-form" placeholder="e.g., 5000" class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm">
+                </div>
+
+                <div id="date-field" class="hidden">
+                     <label for="next-service-date" class="block text-sm font-medium text-gray-300">Fecha del próximo servicio</label>
+                     <input type="date" name="next-service-date" id="next-service-date" form="maintenance-form" class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm" style="color-scheme: dark;">
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end pt-6 mt-6 border-t border-gray-700 space-x-3">
+             <button type="button" id="save-without-reminder-button" class="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-transparent rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-gray-500">
+                Solo Guardar
+            </button>
+            <button type="submit" form="maintenance-form" id="save-with-reminder-button" class="inline-flex justify-center px-4 py-2 text-sm font-bold text-gray-900 bg-orange-400 border border-transparent rounded-md shadow-sm hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-orange-500">
+                Guardar y Recordar
+            </button>
+        </div>
     </div>
+</div>
 
-            <!-- End of Add Maintenance Form -->
-             <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const openModalButton = document.getElementById('open-reminder-modal-button');
-            const modal = document.getElementById('reminder-modal');
-            const closeModalButton = document.getElementById('close-modal-button');
-            const saveWithoutReminderButton = document.getElementById('save-without-reminder-button');
-            const maintenanceForm = document.getElementById('maintenance-form');
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const openModalButton = document.getElementById('open-reminder-modal-button');
+        const modal = document.getElementById('reminder-modal');
+        const closeModalButton = document.getElementById('close-modal-button');
+        const saveWithoutReminderButton = document.getElementById('save-without-reminder-button');
+        const maintenanceForm = document.getElementById('maintenance-form');
 
-            const reminderTypeSelect = document.getElementById('reminder-type');
-            const distanceField = document.getElementById('distance-field');
-            const dateField = document.getElementById('date-field');
+        const reminderTypeSelect = document.getElementById('reminder-type');
+        const distanceField = document.getElementById('distance-field');
+        const dateField = document.getElementById('date-field');
 
-            // Open modal
-            openModalButton.addEventListener('click', function(event) {
-                event.preventDefault();
-                modal.classList.remove('hidden');
-            });
-
-            // Close modal with X button
-            closeModalButton.addEventListener('click', function() {
-                modal.classList.add('hidden');
-            });
-
-            // Handle reminder type change
-            reminderTypeSelect.addEventListener('change', function() {
-                distanceField.classList.toggle('hidden', this.value !== 'distance');
-                dateField.classList.toggle('hidden', this.value !== 'date');
-            });
-            
-            // Logic for "Save without Reminder" button
-            saveWithoutReminderButton.addEventListener('click', function() {
-                // Here you would typically submit the form.
-                // For this static example, we'll just log to console and hide the modal.
-                console.log('Submitting form without reminder...');
-                maintenanceForm.submit();
-                modal.classList.add('hidden');
-            });
-            
-            // Close modal if clicking outside of it
-            modal.addEventListener('click', function(event) {
-                if (event.target === modal) {
-                    modal.classList.add('hidden');
-                }
-            });
+        // Open modal
+        openModalButton.addEventListener('click', function(event) {
+            event.preventDefault();
+            // Basic validation
+            if(maintenanceForm.checkValidity()){
+                 modal.classList.remove('hidden');
+            } else {
+                 maintenanceForm.reportValidity();
+            }
         });
-    </script>
+
+        // Close modal with X button
+        closeModalButton.addEventListener('click', function() {
+            modal.classList.add('hidden');
+        });
+
+        // Handle reminder type change
+        reminderTypeSelect.addEventListener('change', function() {
+            distanceField.classList.toggle('hidden', this.value !== 'distance');
+            dateField.classList.toggle('hidden', this.value !== 'date');
+        });
+        
+        // Logic for "Save without Reminder" button
+        saveWithoutReminderButton.addEventListener('click', function() {
+            // Set reminder type to none explicitly just in case
+            reminderTypeSelect.value = 'none';
+            maintenanceForm.submit();
+        });
+        
+        // Close modal if clicking outside of it
+        modal.addEventListener('click', function(event) {
+            if (event.target === modal) {
+                modal.classList.add('hidden');
+            }
+        });
+    });
+</script>
 
 {% endblock %}

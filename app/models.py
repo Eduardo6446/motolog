@@ -1,94 +1,83 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
+# --- 1. PERFIL DE USUARIO ---
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    profile_picture = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
+    profile_picture = models.ImageField(upload_to='profile_pics/', default='default_profile_pic.jpg', blank=True)
+    bio = models.TextField(max_length=500, blank=True)
+    location = models.CharField(max_length=100, blank=True)
 
     def __str__(self):
-        return f'Perfil de {self.user.username}'
+        return f'{self.user.username} Profile'
 
-# --- Modelo de Motocicleta (RF-01, RF-05) ---
+# --- 2. MOTOCICLETA ---
 class Motorcycle(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='motorcycles')
-    make = models.CharField(max_length=100, verbose_name="Marca")
-    model = models.CharField(max_length=100, verbose_name="Modelo")
-    year = models.PositiveIntegerField(verbose_name="Año")
-    mileage = models.PositiveIntegerField(verbose_name="Kilometraje")
-    nickname = models.CharField(max_length=100, blank=True, null=True, verbose_name="Apodo")
-    photo = models.ImageField(upload_to='motorcycle_photos/', null=True, blank=True)
-    is_active = models.BooleanField(default=True, verbose_name="Activa")
+    nickname = models.CharField(max_length=100, help_text="Apodo de tu moto (ej. La Furia)")
+    make = models.CharField(max_length=100, verbose_name="Marca")  # Ej: Bajaj, Yamaha
+    model = models.CharField(max_length=100, verbose_name="Modelo") # Ej: Pulsar NS200 (Importante para la IA)
+    year = models.IntegerField(verbose_name="Año")
+    mileage = models.IntegerField(default=0, verbose_name="Kilometraje Actual")
+    photo = models.ImageField(upload_to='moto_photos/', default='default_motorcycle_photo.jpg', blank=True)
+    is_active = models.BooleanField(default=True, help_text="Desmarcar si vendiste o diste de baja la moto")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'{self.make} {self.model} ({self.year}) de {self.owner.username}'
+        return f"{self.nickname} ({self.make} {self.model})"
 
-# --- Modelo de Historial de Mantenimiento (RF-02) ---
+# --- 3. REGISTRO DE MANTENIMIENTO (LOGS) ---
 class MaintenanceLog(models.Model):
+    # Opciones estandarizadas para ayudar a la IA a clasificar
     SERVICE_CHOICES = [
-        ('oil_change', 'Cambio de Aceite'),
-        ('brake_service', 'Servicio de Frenos'),
-        ('tire_replacement', 'Cambio de Llantas'),
-        ('chain_service', 'Servicio de Cadena'),
-        ('general_checkup', 'Revisión General'),
-        ('other', 'Otro'),
+        ('aceite_motor', 'Cambio de Aceite de Motor'),
+        ('filtro_aceite', 'Cambio de Filtro de Aceite'),
+        ('filtro_aire', 'Limpieza/Cambio Filtro de Aire'),
+        ('bujias', 'Cambio de Bujías'),
+        ('kit_arrastre', 'Mantenimiento Kit de Arrastre'),
+        ('frenos_delanteros', 'Frenos Delanteros (Pastillas/Líquido)'),
+        ('frenos_traseros', 'Frenos Traseros (Zapatas/Pastillas)'),
+        ('neumaticos', 'Cambio de Neumáticos'),
+        ('bateria', 'Batería'),
+        ('ajuste_valvulas', 'Ajuste de Válvulas'),
+        ('suspension', 'Mantenimiento de Suspensión'),
+        ('otro', 'Otro / Reparación General'),
     ]
 
-    # Relación muchos-a-uno: Una motocicleta puede tener muchos registros de mantenimiento.
     motorcycle = models.ForeignKey(Motorcycle, on_delete=models.CASCADE, related_name='maintenance_logs')
     service_type = models.CharField(max_length=50, choices=SERVICE_CHOICES, verbose_name="Tipo de Servicio")
-    date = models.DateField(verbose_name="Fecha del Servicio")
-    mileage_at_service = models.PositiveIntegerField(verbose_name="Kilometraje en el Servicio")
-    cost = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True, verbose_name="Costo")
+    date = models.DateField(default=timezone.now, verbose_name="Fecha del Servicio")
+    mileage_at_service = models.IntegerField(verbose_name="Kilometraje al momento del servicio")
+    cost = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Costo")
     notes = models.TextField(blank=True, null=True, verbose_name="Notas Adicionales")
-
-    class Meta:
-        ordering = ['-date']
+    
+    # Campos de auditoría
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'Servicio de {self.get_service_type_display()} para {self.motorcycle.model} en {self.date}'
+        return f"{self.get_service_type_display()} - {self.motorcycle.nickname} ({self.date})"
 
-# --- Modelo de Recordatorios (RF-03, RF-04) ---
+    class Meta:
+        ordering = ['-date'] # Los más recientes primero
+
+# --- 4. RECORDATORIOS DE MANTENIMIENTO ---
 class MaintenanceReminder(models.Model):
     REMINDER_TYPE_CHOICES = [
-        ('distance', 'Por Distancia (km)'),
+        ('distance', 'Por Kilometraje'),
         ('date', 'Por Fecha'),
     ]
 
     motorcycle = models.ForeignKey(Motorcycle, on_delete=models.CASCADE, related_name='reminders')
-    service_type = models.CharField(max_length=100, verbose_name="Tipo de Servicio a Recordar")
-    reminder_type = models.CharField(max_length=10, choices=REMINDER_TYPE_CHOICES, verbose_name="Tipo de Recordatorio")
+    service_type = models.CharField(max_length=100, verbose_name="Servicio a Realizar") # Texto libre o vinculado a choices
+    reminder_type = models.CharField(max_length=20, choices=REMINDER_TYPE_CHOICES, default='distance')
     
-    next_service_at_mileage = models.PositiveIntegerField(null=True, blank=True, verbose_name="Próximo servicio en (km)")
-    next_service_date = models.DateField(null=True, blank=True, verbose_name="Fecha del próximo servicio")
+    # Condiciones del recordatorio
+    next_service_at_mileage = models.IntegerField(null=True, blank=True, verbose_name="A los Km")
+    next_service_date = models.DateField(null=True, blank=True, verbose_name="En la Fecha")
     
-    is_active = models.BooleanField(default=True, verbose_name="Recordatorio Activo")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'Recordatorio para {self.service_type} de {self.motorcycle.model}'
-
-# --- Modelo de Talleres (RF-06) ---
-class Workshop(models.Model):
-    name = models.CharField(max_length=200, verbose_name="Nombre del Taller")
-    address = models.CharField(max_length=255, verbose_name="Dirección")
-    latitude = models.FloatField(verbose_name="Latitud")
-    longitude = models.FloatField(verbose_name="Longitud")
-    phone_number = models.CharField(max_length=20, blank=True, null=True, verbose_name="Teléfono")
-    website = models.URLField(blank=True, null=True, verbose_name="Sitio Web")
-
-    def __str__(self):
-        return self.name
-
-# --- Modelo de Consejos y Tips (RF-07) ---
-class Tip(models.Model):
-    title = models.CharField(max_length=200, verbose_name="Título")
-    content = models.TextField(verbose_name="Contenido")
-    category = models.CharField(max_length=50, verbose_name="Categoría")
-    image = models.ImageField(upload_to='tips_images/', null=True, blank=True, verbose_name="Imagen")
-    published_date = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ['-published_date']
-
-    def __str__(self):
-        return self.title
+        return f"Recordatorio: {self.service_type} para {self.motorcycle.nickname}"
