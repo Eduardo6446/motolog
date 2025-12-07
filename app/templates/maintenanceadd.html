@@ -36,13 +36,19 @@
                 <p class="mt-1 text-xs text-gray-500">Selecciona el componente exacto para ayudar a la IA.</p>
             </div>
 
-            <!-- Fecha del Servicio -->
+            <!-- Fecha del Servicio (PRE-LLENADA CON HOY) -->
             <div>
                 <label for="date" class="block text-sm font-medium text-gray-300">Fecha del Servicio</label>
-                <input type="date" name="date" id="date" required class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm" style="color-scheme: dark;">
+                <input type="date" 
+                       name="date" 
+                       id="date" 
+                       value="{% now 'Y-m-d' %}" 
+                       required 
+                       class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm" 
+                       style="color-scheme: dark;">
             </div>
 
-            <!-- Kilometraje en el Servicio (VALIDADO) -->
+            <!-- Kilometraje en el Servicio (VALIDADO Y PRE-LLENADO) -->
             <div>
                 <label for="mileage-at-service" class="block text-sm font-medium text-gray-300">Kilometraje en el Servicio</label>
                 <input type="number" 
