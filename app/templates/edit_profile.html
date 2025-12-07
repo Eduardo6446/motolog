@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="p-4 mx-auto max-w-2xl sm:p-6 lg:p-8">
+    <!-- Header -->
+    <div class="pb-6 mb-6">
+        <a href="{% url 'profile' %}" class="text-sm text-orange-400 hover:underline">&larr; Volver a Mi Perfil</a>
+        <h2 class="mt-2 text-3xl font-bold text-white">Editar Perfil</h2>
+        <p class="text-gray-400">Actualiza tu información personal.</p>
+    </div>
+
+    <!-- Formulario -->
+    <form action="{% url 'edit_profile' %}" method="POST" enctype="multipart/form-data" class="p-6 space-y-6 bg-gray-800 rounded-xl border border-gray-700">
+        {% csrf_token %}
+
+        <!-- Foto de Perfil -->
+        <div class="flex flex-col items-center sm:flex-row gap-6">
+            <div class="relative group">
+                <div class="w-24 h-24 rounded-full overflow-hidden border-4 border-gray-700">
+                    {% if profile.profile_picture %}
+                        <img id="avatar-preview" src="{{ profile.profile_picture.url }}" alt="Avatar actual" class="object-cover w-full h-full">
+                    {% else %}
+                        <img id="avatar-preview" src="https://placehold.co/200x200/f97316/111827?text={{ user.first_name|first }}" alt="Avatar" class="object-cover w-full h-full">
+                    {% endif %}
+                </div>
+                <!-- Botón superpuesto para cambiar foto (Solo visual) -->
+                <div class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                </div>
+            </div>
+            
+            <div class="w-full">
+                <label class="block text-sm font-medium text-gray-300 mb-2">Cambiar Foto</label>
+                <input type="file" name="profile_picture" accept="image/*" onchange="previewImage(this)"
+                       class="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-500 file:text-white hover:file:bg-orange-600 transition-colors cursor-pointer">
+                <p class="mt-1 text-xs text-gray-500">JPG, PNG o GIF. Máx 2MB.</p>
+            </div>
+        </div>
+
+        <hr class="border-gray-700">
+
+        <!-- Grid de Campos -->
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            
+            <!-- Nombre -->
+            <div>
+                <label for="first-name" class="block text-sm font-medium text-gray-300">Nombre</label>
+                <input type="text" name="first-name" id="first-name" value="{{ user.first_name }}"
+                       class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm transition-colors">
+            </div>
+
+            <!-- Apellido -->
+            <div>
+                <label for="last-name" class="block text-sm font-medium text-gray-300">Apellido</label>
+                <input type="text" name="last-name" id="last-name" value="{{ user.last_name }}"
+                       class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm transition-colors">
+            </div>
+
+            <!-- Email -->
+            <div class="sm:col-span-2">
+                <label for="email" class="block text-sm font-medium text-gray-300">Correo Electrónico</label>
+                <input type="email" name="email" id="email" value="{{ user.email }}"
+                       class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm transition-colors">
+            </div>
+            
+            <!-- Ubicación -->
+            <div class="sm:col-span-2">
+                <label for="location" class="block text-sm font-medium text-gray-300">Ubicación (Ciudad/País)</label>
+                <input type="text" name="location" id="location" value="{{ profile.location }}" placeholder="Ej: Managua, Nicaragua"
+                       class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm transition-colors">
+            </div>
+
+            <!-- Biografía -->
+            <div class="sm:col-span-2">
+                <label for="bio" class="block text-sm font-medium text-gray-300">Biografía</label>
+                <textarea id="bio" name="bio" rows="3" 
+                          class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm transition-colors"
+                          placeholder="Cuéntanos un poco sobre ti y tus motos...">{{ profile.bio }}</textarea>
+            </div>
+
+        </div>
+
+        <!-- Botones -->
+        <div class="flex justify-end gap-3 pt-4 border-t border-gray-700">
+            <a href="{% url 'profile' %}" class="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-transparent rounded-lg hover:bg-gray-600 transition-colors">
+                Cancelar
+            </a>
+            <button type="submit" class="px-6 py-2 text-sm font-bold text-white bg-orange-500 border border-transparent rounded-lg hover:bg-orange-600 shadow-lg shadow-orange-500/20 transition-colors">
+                Guardar Cambios
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Script simple para previsualizar la foto antes de subir -->
+<script>
+function previewImage(input) {
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('avatar-preview').src = e.target.result;
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+</script>
+
+{% endblock %}

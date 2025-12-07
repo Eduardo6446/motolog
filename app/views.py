@@ -362,3 +362,53 @@ def update_mileage(request, moto_id):
 
     # Siempre redirigimos a los detalles, haya funcionado o no
     return redirect('motodetails', moto_id=moto_id)
+
+
+def edit_profile(request):
+    """Permite al usuario actualizar sus datos personales y foto."""
+    if 'user_id' not in request.session:
+        return redirect('login')
+    
+    user = User.objects.get(id=request.session['user_id'])
+    # Nos aseguramos de que el perfil exista
+    profile, created = Profile.objects.get_or_create(user=user)
+
+    if request.method == 'POST':
+        # 1. Actualizar datos del Usuario (User Model)
+        user.first_name = request.POST.get('first-name')
+        user.last_name = request.POST.get('last-name')
+        user.email = request.POST.get('email')
+        user.save()
+
+        # 2. Actualizar datos del Perfil (Profile Model)
+        profile.bio = request.POST.get('bio')
+        profile.location = request.POST.get('location')
+        
+        # Si suben una nueva foto, la actualizamos
+        if 'profile_picture' in request.FILES:
+            profile.profile_picture = request.FILES['profile_picture']
+        
+        profile.save()
+        
+        # Opcional: Mensaje de éxito (si usas 'messages' en tu base.html)
+        # messages.success(request, 'Perfil actualizado correctamente')
+
+        return redirect('profile')
+
+    # GET: Mostrar formulario con datos actuales
+    return render(request, 'edit_profile.html', {'user': user, 'profile': profile})
+
+
+def change_password(request):
+    if 'user_id' not in request.session: return redirect('login')
+    user = User.objects.get(id=request.session['user_id'])
+    if request.method == 'POST':
+        current = request.POST.get('current_password')
+        new_pass = request.POST.get('new_password')
+        confirm = request.POST.get('confirm_password')
+        if not user.check_password(current): return render(request, 'change_password.html', {'error': 'Contraseña actual incorrecta'})
+        if new_pass != confirm: return render(request, 'change_password.html', {'error': 'Las contraseñas no coinciden'})
+        user.set_password(new_pass)
+        user.save()
+        return redirect('profile')
+    return render(request, 'change_password.html')
