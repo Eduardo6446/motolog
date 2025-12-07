@@ -40,9 +40,9 @@
                 </button>
             </form>
 
-            <a href="{% url 'maintenance_add' moto_id=motorcycle.id %}" class="flex items-center gap-2 px-4 py-2 text-sm font-bold text-gray-900 transition-colors bg-orange-500 rounded-lg hover:bg-orange-600 shadow-lg shadow-orange-500/20">
+            <a href="{% url 'maintenance_add' moto_id=motorcycle.id %}" class="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-bold text-gray-900 transition-colors bg-orange-500 rounded-lg hover:bg-orange-600 shadow-lg shadow-orange-500/20">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                <span class="hidden sm:inline">Nuevo Mantenimiento</span>
+                <span>Nuevo Mantenimiento</span>
             </a>
         </div>
     </div>
@@ -134,11 +134,9 @@
                             <div class="mb-2">
                                 <div class="flex justify-between mb-1 text-xs text-gray-400">
                                     <span>Nivel de Desgaste</span>
-                                    <!-- Usamos stringformat en lugar de floatform -->
                                     <span>{{ item.calculo.urgencia|stringformat:".2f" }}x</span>
                                 </div>
                                 <div class="w-full h-2 bg-gray-900 rounded-full overflow-hidden">
-                                    <!-- Usamos widthratio para calcular el % seguro -->
                                     <div class="h-full rounded-full transition-all duration-1000 
                                         {% if item.calculo.urgencia > 0.9 %} bg-red-500 
                                         {% elif item.calculo.urgencia > 0.7 %} bg-orange-500 
@@ -166,18 +164,37 @@
             <div class="py-12 text-center bg-gray-800/50 border border-dashed border-gray-700 rounded-xl">
                 <svg class="w-12 h-12 mx-auto text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
                 <p class="text-gray-400">No hay datos de diagnóstico disponibles.</p>
-                <p class="text-xs text-gray-500 mt-1">Verifica la conexión con el servidor de IA.</p>
             </div>
             {% endif %}
         </div>
     </div>
 
-    <!-- 3. SECCIÓN HISTORIAL DE MANTENIMIENTO -->
+    <!-- 3. SECCIÓN HISTORIAL CON ORDENAMIENTO (NUEVO) -->
     <div class="mt-12">
-        <h3 class="mb-6 text-xl font-bold text-white flex items-center gap-3">
-            <svg class="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 00-2-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-            Historial de Servicios
-        </h3>
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-bold text-white flex items-center gap-3">
+                <svg class="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 00-2-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                Historial de Servicios
+            </h3>
+
+            <!-- Dropdown Ordenar -->
+            <div class="relative text-left">
+                <button type="button" onclick="toggleSortMenu()" id="sort-menu-button" 
+                    class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-300 bg-gray-800 border border-gray-600 rounded-lg shadow-sm hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-orange-500 transition-colors">
+                    <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"></path></svg>
+                    <span id="current-sort-label">Recientes</span>
+                </button>
+
+                <div id="sort-dropdown" class="absolute right-0 z-10 hidden w-44 mt-2 origin-top-right bg-gray-800 border border-gray-700 rounded-md shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none animate-fade-in-down">
+                    <div class="py-1" role="none">
+                        <button onclick="sortHistory('date_desc')" class="sort-option block w-full px-4 py-2 text-sm text-left text-orange-400 bg-gray-700/50 font-bold" role="menuitem">Más Recientes</button>
+                        <button onclick="sortHistory('date_asc')" class="sort-option block w-full px-4 py-2 text-sm text-left text-gray-300 hover:bg-gray-700 hover:text-white" role="menuitem">Más Antiguos</button>
+                        <button onclick="sortHistory('service')" class="sort-option block w-full px-4 py-2 text-sm text-left text-gray-300 hover:bg-gray-700 hover:text-white" role="menuitem">Servicio (A-Z)</button>
+                        <button onclick="sortHistory('cost')" class="sort-option block w-full px-4 py-2 text-sm text-left text-gray-300 hover:bg-gray-700 hover:text-white" role="menuitem">Costo (Mayor)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         {% if maintenance_logs %}
         <div class="overflow-hidden bg-gray-800 border border-gray-700 rounded-xl shadow-lg">
@@ -185,16 +202,21 @@
                 <table class="min-w-full text-left text-sm">
                     <thead class="bg-gray-900 text-gray-400 uppercase font-medium">
                         <tr>
-                            <th class="px-6 py-4">Fecha</th>
-                            <th class="px-6 py-4">Servicio</th>
-                            <th class="px-6 py-4">Kilometraje</th>
-                            <th class="px-6 py-4">Costo</th>
+                            <th class="px-6 py-4 cursor-pointer hover:text-white" onclick="sortHistory('date_desc')">Fecha</th>
+                            <th class="px-6 py-4 cursor-pointer hover:text-white" onclick="sortHistory('service')">Servicio</th>
+                            <th class="px-6 py-4">Km</th>
+                            <th class="px-6 py-4 cursor-pointer hover:text-white" onclick="sortHistory('cost')">Costo</th>
                             <th class="px-6 py-4">Notas</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-700">
+                    <tbody id="history-body" class="divide-y divide-gray-700">
+                        <!-- FILAS CON DATA ATTRIBUTES PARA ORDENAMIENTO JS -->
                         {% for log in maintenance_logs %}
-                        <tr class="hover:bg-gray-700/50 transition-colors">
+                        <tr class="hover:bg-gray-700/50 transition-colors" 
+                            data-date="{{ log.date|date:'Y-m-d' }}" 
+                            data-service="{{ log.get_service_type_display }}" 
+                            data-cost="{{ log.cost|default:0 }}">
+                            
                             <td class="px-6 py-4 whitespace-nowrap text-white font-medium">
                                 {{ log.date|date:"d M, Y" }}
                             </td>
@@ -231,6 +253,12 @@
     </div>
 
 </div>
+
+<!-- BOTÓN FLOTANTE (FAB) PARA AGREGAR MANTENIMIENTO (MÓVIL) -->
+<!-- Se muestra solo en 'sm' o menor -->
+<a href="{% url 'maintenance_add' moto_id=motorcycle.id %}" class="fixed bottom-24 right-6 z-40 p-4 text-gray-900 bg-orange-500 rounded-full shadow-2xl sm:hidden hover:bg-orange-600 transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 active:scale-95 border-2 border-orange-400">
+    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+</a>
 
 <!-- MODAL: ACTUALIZAR KILOMETRAJE -->
 <div id="km-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-75 backdrop-blur-sm">
@@ -270,8 +298,17 @@
     </div>
 </div>
 
+<style>
+    @keyframes fadeInDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in-down { animation: fadeInDown 0.2s ease-out; }
+</style>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // --- LÓGICA MODAL KILOMETRAJE ---
         const modal = document.getElementById('km-modal');
         const openBtn = document.getElementById('btn-update-km');
         const closeBtn = document.getElementById('close-km-modal');
@@ -282,19 +319,69 @@
             modal.classList.remove('hidden');
             setTimeout(() => kmInput.focus(), 100); 
         }
-
-        function closeModal() {
-            modal.classList.add('hidden');
-        }
+        function closeModal() { modal.classList.add('hidden'); }
 
         if(openBtn) openBtn.addEventListener('click', openModal);
         if(closeBtn) closeBtn.addEventListener('click', closeModal);
         if(cancelBtn) cancelBtn.addEventListener('click', closeModal);
-
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal) closeModal();
+        modal.addEventListener('click', function(e) { if (e.target === modal) closeModal(); });
+        
+        // Cierre del menú al hacer click fuera (para el sort)
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('sort-dropdown');
+            const button = document.getElementById('sort-menu-button');
+            if (menu && button && !button.contains(event.target) && !menu.contains(event.target)) {
+                menu.classList.add('hidden');
+            }
         });
     });
+
+    // --- LÓGICA DE ORDENAMIENTO (CLIENT-SIDE) ---
+    function toggleSortMenu() {
+        document.getElementById('sort-dropdown').classList.toggle('hidden');
+    }
+
+    function sortHistory(criteria) {
+        const tbody = document.getElementById('history-body');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const labelBtn = document.getElementById('current-sort-label');
+        
+        // Cerrar menú
+        document.getElementById('sort-dropdown').classList.add('hidden');
+
+        // Actualizar UI del botón
+        if (criteria === 'date_desc') labelBtn.innerText = "Recientes";
+        else if (criteria === 'date_asc') labelBtn.innerText = "Antiguos";
+        else if (criteria === 'service') labelBtn.innerText = "Servicio";
+        else if (criteria === 'cost') labelBtn.innerText = "Costo";
+
+        // Ordenar array
+        rows.sort((a, b) => {
+            if (criteria === 'date_desc') {
+                return new Date(b.getAttribute('data-date')) - new Date(a.getAttribute('data-date'));
+            }
+            if (criteria === 'date_asc') {
+                 return new Date(a.getAttribute('data-date')) - new Date(b.getAttribute('data-date'));
+            }
+            if (criteria === 'service') {
+                return a.getAttribute('data-service').localeCompare(b.getAttribute('data-service'));
+            }
+             if (criteria === 'cost') {
+                return parseFloat(b.getAttribute('data-cost')) - parseFloat(a.getAttribute('data-cost'));
+            }
+        });
+
+        // Reinsertar filas ordenadas
+        rows.forEach(row => tbody.appendChild(row));
+
+        // Actualizar estilos del menú
+        document.querySelectorAll('.sort-option').forEach(btn => {
+            btn.className = "sort-option block w-full px-4 py-2 text-sm text-left text-gray-300 hover:bg-gray-700 hover:text-white";
+            if (btn.getAttribute('onclick').includes(criteria)) {
+                btn.className = "sort-option block w-full px-4 py-2 text-sm text-left text-orange-400 bg-gray-700/50 font-bold";
+            }
+        });
+    }
 </script>
 
 {% endblock %}
