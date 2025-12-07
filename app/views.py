@@ -112,6 +112,19 @@ def garage(request):
 def map(request):
     return render(request, 'map.html', {})
 
+def toggle_moto_status(request, moto_id):
+    if 'user_id' not in request.session: return redirect('login')
+    
+    if request.method == 'POST':
+        user = User.objects.get(id=request.session['user_id'])
+        moto = get_object_or_404(Motorcycle, pk=moto_id, owner=user)
+        
+        # Invertir estado
+        moto.is_active = not moto.is_active
+        moto.save()
+        
+    return redirect('motodetails', moto_id=moto_id)
+
 # --- VISTA DE DETALLES CORREGIDA (LÓGICA DE DESGASTE REAL) ---
 def motodetails(request, moto_id):
     if 'user_id' not in request.session: return redirect('login')
@@ -119,36 +132,29 @@ def motodetails(request, moto_id):
     user = User.objects.get(id=request.session['user_id'])
     motorcycle = get_object_or_404(Motorcycle, pk=moto_id, owner=user)
     
-    # 1. BUSCAR ÚLTIMO MANTENIMIENTO DE CADA PIEZA
-    # Creamos un diccionario: {'aceite_motor': 11000, 'bujias': 8000, ...}
-    # Inicializamos todo en 0 (asumiendo que nunca se cambiaron si no hay logs)
+    # 1. Obtener historial (Ordenado por fecha descendente)
+    logs = MaintenanceLog.objects.filter(motorcycle=motorcycle).order_by('-date')
+    
+    # Historial para la API (simplificado)
     km_ultimo_cambio = {} 
-    
-    # Obtenemos todos los logs de esta moto ordenados por kilometraje (ascendente)
-    logs = MaintenanceLog.objects.filter(motorcycle=motorcycle).order_by('mileage_at_service')
-    
-    for log in logs:
-        # Al recorrer en orden, sobrescribimos, quedándonos con el valor más alto (el último)
+    # Recorremos al revés (ascendente) para calcular el último km
+    for log in reversed(logs):
         km_ultimo_cambio[log.service_type] = log.mileage_at_service
 
     predicciones_display = []
     error_api = None
     
-    # 2. CONSULTAR A LA IA CON EL "KM DE USO"
+    # 2. Consultar IA (Igual que antes)
     for comp_id, comp_nombre in COMPONENTES_DASHBOARD:
         try:
-            # LÓGICA CLAVE: Restamos el KM actual - KM del último cambio
             km_base = km_ultimo_cambio.get(comp_id, 0)
             km_uso_pieza = motorcycle.mileage - km_base
-            
-            # Protección por si alguien metió mal un dedo y el log es mayor al actual
             if km_uso_pieza < 0: km_uso_pieza = 0
 
-            # Ahora le preguntamos a la IA: "¿Cómo está un aceite con [km_uso_pieza] km?"
             payload = {
                 "modelo": motorcycle.model,
                 "componente": comp_id,
-                "km": km_uso_pieza  # <--- AQUÍ ESTÁ EL CAMBIO
+                "km": km_uso_pieza 
             }
             
             headers = {'Content-Type': 'application/json'}
@@ -165,12 +171,9 @@ def motodetails(request, moto_id):
                 estado_ia = data.get('prediccion_ia', 'desconocido')
                 confianza = data.get('confianza', '0%').replace('%', '')
                 
-                # Mapeo visual
                 urgencia_visual = 0.1
                 origen_txt = "Desde fábrica"
-                
-                if km_base > 0:
-                    origen_txt = f"Hace {km_uso_pieza} km"
+                if km_base > 0: origen_txt = f"Hace {km_uso_pieza} km"
                 
                 if estado_ia == 'desgaste_normal': urgencia_visual = 0.4
                 elif estado_ia == 'muy_desgastado': urgencia_visual = 0.8
@@ -178,27 +181,20 @@ def motodetails(request, moto_id):
                 
                 predicciones_display.append({
                     "componente": comp_nombre,
-                    "prediccion_ia": {
-                        "estado_probable": estado_ia,
-                        "confianza": float(confianza)
-                    },
-                    "calculo": {
-                        "urgencia": urgencia_visual,
-                        "origen_dato": origen_txt # Mostramos al usuario hace cuánto se cambió
-                    }
+                    "prediccion_ia": { "estado_probable": estado_ia, "confianza": float(confianza) },
+                    "calculo": { "urgencia": urgencia_visual, "origen_dato": origen_txt }
                 })
-            
         except Exception as e:
-            error_api = "Conexión parcial con IA"
-            print(f"Error pieza {comp_id}: {e}")
+            pass # Error silencioso en loop para no romper la vista
 
-    if not predicciones_display and not error_api:
-        error_api = "No hay datos suficientes para el diagnóstico."
+    if not predicciones_display:
+        error_api = "Sin conexión IA"
 
     context = {
         'motorcycle': motorcycle,
         'predicciones': predicciones_display,
-        'error_api': error_api
+        'error_api': error_api,
+        'maintenance_logs': logs # <--- NUEVO: Pasamos los logs al template
     }
     return render(request, 'motodetails.html', context)
 

@@ -13,6 +13,7 @@ urlpatterns = [
     path('map/', views.map, name='map'),
     path('<int:moto_id>/details/', views.motodetails, name='motodetails'),
     path('motoadd/', views.motoadd, name='motoadd'),
+    path('toggle_moto_status/<int:moto_id>/', views.toggle_moto_status, name='toggle_moto_status'),
     
     # Authentication URLs
     path('accounts/login/', views.login, name='login'),
