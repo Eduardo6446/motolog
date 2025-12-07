@@ -3,69 +3,90 @@
 {% block content %}
 
 <div class="p-4 mx-auto max-w-7xl sm:p-6 lg:p-8">
-    <!-- Header -->
-    <div class="flex flex-col items-center justify-between pb-6 mb-6 border-b border-gray-700 sm:flex-row">
+    
+    <!-- Header y Filtros -->
+    <div class="flex flex-col gap-6 pb-6 mb-6 border-b border-gray-700 md:flex-row md:items-center md:justify-between">
         <div>
-            <h2 class="text-3xl font-bold">Mi Garaje</h2>
-            <p class="mt-1 text-sm text-gray-400">Gestiona y monitorea el estado de tus vehículos.</p>
+            <h2 class="text-3xl font-bold text-white">Mi Garaje</h2>
+            <p class="mt-1 text-sm text-gray-400">Gestiona tu flota de vehículos.</p>
         </div>
         
-        <a href="{% url 'motoadd' %}" class="flex items-center justify-center w-full gap-2 px-4 py-2 mt-4 text-base font-bold text-center text-white transition-colors duration-200 bg-orange-500 border border-transparent rounded-lg sm:mt-0 sm:w-auto hover:bg-orange-600 shadow-lg shadow-orange-500/20">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-            <span>Agregar Motocicleta</span>
-        </a>
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
+            
+            <!-- DROPDOWN DE FILTRO -->
+            <div class="relative text-left">
+                <button type="button" onclick="toggleFilterMenu()" id="filter-menu-button" 
+                    class="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-gray-300 bg-gray-800 border border-gray-600 rounded-lg shadow-sm hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-orange-500 transition-colors">
+                    <svg class="w-5 h-5 mr-2 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                    <span id="current-filter-label">Activas</span>
+                    <svg class="w-5 h-5 ml-2 -mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+
+                <!-- Menú desplegable -->
+                <div id="filter-dropdown" class="absolute right-0 z-10 hidden w-40 mt-2 origin-top-right bg-gray-800 border border-gray-700 rounded-md shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none animate-fade-in-down">
+                    <div class="py-1" role="none">
+                        <button onclick="filterGarage('active')" id="btn-active" class="filter-option block w-full px-4 py-2 text-sm text-left text-orange-400 bg-gray-700/50 font-bold" role="menuitem">Activas</button>
+                        <button onclick="filterGarage('inactive')" id="btn-inactive" class="filter-option block w-full px-4 py-2 text-sm text-left text-gray-300 hover:bg-gray-700 hover:text-white" role="menuitem">Inactivas</button>
+                        <button onclick="filterGarage('all')" id="btn-all" class="filter-option block w-full px-4 py-2 text-sm text-left text-gray-300 hover:bg-gray-700 hover:text-white" role="menuitem">Todas</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botón Agregar (SOLO ESCRITORIO) -->
+            <!-- Agregué 'hidden sm:flex' para ocultarlo en móviles -->
+            <a href="{% url 'motoadd' %}" class="hidden sm:flex items-center justify-center gap-2 px-4 py-2 text-sm font-bold text-gray-900 bg-orange-500 rounded-lg hover:bg-orange-600 transition-colors shadow-lg shadow-orange-500/20">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                <span>Nueva Moto</span>
+            </a>
+        </div>
     </div>
 
     <!-- 
         MOTORCYCLE GRID
     -->
-    {% if motorcycles %}
-    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+    <div id="moto-grid" class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 transition-all duration-500">
         {% for motorcycle in motorcycles %}
         
-        <!-- Active Motorcycle Card -->
-        <a href="{% url 'motodetails' moto_id=motorcycle.id %}" class="group relative block h-full no-underline">
-            <div class="flex flex-col h-full overflow-hidden transition-all duration-300 bg-gray-800 border border-gray-700 rounded-xl group-hover:border-orange-500/50 group-hover:shadow-xl group-hover:shadow-orange-500/10 group-hover:-translate-y-1">
+        <!-- Motorcycle Card con DATA ATTRIBUTE -->
+        <a href="{% url 'motodetails' moto_id=motorcycle.id %}" 
+           class="moto-card group relative block h-full no-underline transition-all duration-300 transform scale-100 opacity-100"
+           data-status="{% if motorcycle.is_active %}active{% else %}inactive{% endif %}">
+           
+            <div class="flex flex-col h-full overflow-hidden bg-gray-800 border border-gray-700 rounded-xl 
+                 {% if not motorcycle.is_active %} opacity-75 grayscale hover:grayscale-0 hover:opacity-100 {% endif %}
+                 hover:border-orange-500/50 hover:shadow-xl hover:-translate-y-1 transition-all">
                 
                 <!-- Image Container -->
                 <div class="relative h-48 overflow-hidden bg-gray-900">
                     {% if motorcycle.photo %}
-                        <img src="{{ motorcycle.photo.url }}" 
-                             alt="{{ motorcycle.make }} {{ motorcycle.model }}" 
-                             class="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110">
+                        <img src="{{ motorcycle.photo.url }}" alt="{{ motorcycle.model }}" class="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110">
                     {% else %}
-                        <!-- Placeholder si no hay foto -->
-                        <img src="https://placehold.co/400x300/1f2937/4b5563?text={{ motorcycle.make }}+{{ motorcycle.model }}" 
-                             alt="No photo" 
-                             class="object-cover w-full h-full opacity-50">
+                        <img src="https://placehold.co/400x300/1f2937/4b5563?text={{ motorcycle.make }}+{{ motorcycle.model }}" class="object-cover w-full h-full opacity-50">
                     {% endif %}
 
-                    <!-- Status Badge -->
-                    <div class="absolute top-0 right-0 px-3 py-1 m-2 text-xs font-bold rounded-full 
-                        {% if motorcycle.is_active %} bg-green-500/20 text-green-400 border border-green-500/30
-                        {% else %} bg-gray-600/20 text-gray-400 border border-gray-600/30 {% endif %} backdrop-blur-md">
+                    <div class="absolute top-0 right-0 px-2 py-1 m-2 text-xs font-bold rounded-md backdrop-blur-md border shadow-sm
+                        {% if motorcycle.is_active %} bg-green-500/20 text-green-400 border-green-500/30
+                        {% else %} bg-gray-800/80 text-gray-300 border-gray-600 {% endif %}">
                         {% if motorcycle.is_active %} Activa {% else %} Inactiva {% endif %}
                     </div>
-                    
-                    <!-- Gradient Overlay -->
-                    <div class="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-transparent to-transparent"></div>
                 </div>
 
                 <!-- Content -->
                 <div class="flex flex-col flex-1 p-4">
                     <div class="flex items-start justify-between">
-                        <div>
-                            <p class="text-xs font-medium tracking-wider text-orange-400 uppercase">{{ motorcycle.make }}</p>
-                            <h4 class="mt-1 text-lg font-bold text-white group-hover:text-orange-100">{{ motorcycle.model }}</h4>
+                        <div class="min-w-0">
+                            <p class="text-xs font-medium tracking-wider text-orange-400 uppercase truncate">{{ motorcycle.make }}</p>
+                            <h4 class="mt-1 text-lg font-bold text-white truncate group-hover:text-orange-100">{{ motorcycle.model }}</h4>
                         </div>
-                        <span class="px-2 py-1 text-xs font-medium text-gray-400 bg-gray-700 rounded">{{ motorcycle.year }}</span>
                     </div>
-                    
                     {% if motorcycle.nickname %}
-                    <p class="mt-2 text-sm text-gray-400 italic">"{{ motorcycle.nickname }}"</p>
+                        <p class="mt-1 text-sm text-gray-400 italic truncate">"{{ motorcycle.nickname }}"</p>
+                    {% else %}
+                        <p class="mt-1 text-sm text-gray-400">{{ motorcycle.year }}</p>
                     {% endif %}
-
-                    <div class="mt-auto pt-4 flex items-center gap-2 text-sm text-gray-500">
+                    <div class="mt-auto pt-4 flex items-center gap-2 text-sm text-gray-500 border-t border-gray-700/50">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                         <span>{{ motorcycle.mileage }} km</span>
                     </div>
@@ -75,23 +96,117 @@
         {% endfor %}
     </div>
 
-    {% else %}
-    <!--
-        EMPTY STATE
-    -->
-    <div class="flex flex-col items-center justify-center py-20 mt-8 text-center bg-gray-800/50 border-2 border-dashed border-gray-700 rounded-2xl">
+    <!-- EMPTY STATES -->
+    <div id="empty-state" class="hidden flex-col items-center justify-center py-20 mt-8 text-center bg-gray-800/50 border-2 border-dashed border-gray-700 rounded-2xl animate-fade-in">
         <div class="p-4 mb-4 bg-gray-800 rounded-full">
-            <svg class="w-12 h-12 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+            <svg class="w-12 h-12 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
         </div>
-        <h3 class="text-xl font-bold text-white">Tu garaje está vacío</h3>
-        <p class="max-w-md mx-auto mt-2 text-gray-400">Registra tu primera motocicleta para comenzar a gestionar sus mantenimientos y recibir alertas inteligentes.</p>
-        <a href="{% url 'motoadd' %}" class="flex items-center justify-center gap-2 px-6 py-3 mt-8 text-base font-bold text-white transition-all duration-200 bg-orange-500 rounded-lg hover:bg-orange-600 hover:shadow-lg hover:shadow-orange-500/20">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-            <span>Agregar mi primera moto</span>
-        </a>
+        <h3 id="empty-title" class="text-xl font-bold text-white">No se encontraron motos</h3>
+        <p id="empty-desc" class="max-w-md mx-auto mt-2 text-gray-400">Ajusta los filtros o agrega una nueva.</p>
     </div>
-    {% endif %}
 
 </div>
+
+<!-- BOTÓN FLOTANTE (SOLO MÓVIL) -->
+<!-- Se muestra solo en 'sm' o menor (hidden en sm:hidden) -->
+<a href="{% url 'motoadd' %}" class="fixed bottom-24 right-6 z-40 p-4 text-gray-900 bg-orange-500 rounded-full shadow-2xl sm:hidden hover:bg-orange-600 transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 active:scale-95 border-2 border-orange-400">
+    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+</a>
+
+<style>
+    /* Animación simple para el dropdown */
+    @keyframes fadeInDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in-down {
+        animation: fadeInDown 0.2s ease-out;
+    }
+</style>
+
+<script>
+    function toggleFilterMenu() {
+        const menu = document.getElementById('filter-dropdown');
+        menu.classList.toggle('hidden');
+    }
+
+    // Cerrar el menú si se hace clic fuera
+    document.addEventListener('click', function(event) {
+        const menu = document.getElementById('filter-dropdown');
+        const button = document.getElementById('filter-menu-button');
+        if (!button.contains(event.target) && !menu.contains(event.target)) {
+            menu.classList.add('hidden');
+        }
+    });
+
+    function filterGarage(filterType) {
+        const cards = document.querySelectorAll('.moto-card');
+        const emptyState = document.getElementById('empty-state');
+        const title = document.getElementById('empty-title');
+        const desc = document.getElementById('empty-desc');
+        const labelBtn = document.getElementById('current-filter-label');
+        
+        // Cerrar menú
+        document.getElementById('filter-dropdown').classList.add('hidden');
+
+        let visibleCount = 0;
+
+        // 1. Actualizar Texto del Botón
+        if (filterType === 'active') labelBtn.innerText = "Activas";
+        else if (filterType === 'inactive') labelBtn.innerText = "Inactivas";
+        else labelBtn.innerText = "Todas";
+
+        // 2. Filtrar Tarjetas
+        cards.forEach(card => {
+            const status = card.getAttribute('data-status');
+            
+            if (filterType === 'all' || status === filterType) {
+                card.classList.remove('hidden');
+                requestAnimationFrame(() => {
+                    card.classList.remove('opacity-0', 'scale-95');
+                    card.classList.add('opacity-100', 'scale-100');
+                });
+                visibleCount++;
+            } else {
+                card.classList.add('opacity-0', 'scale-95');
+                card.classList.add('hidden');
+                card.classList.remove('opacity-100', 'scale-100');
+            }
+        });
+
+        // 3. Actualizar Estilo de Opciones en el Menú
+        document.querySelectorAll('.filter-option').forEach(btn => {
+            // Limpiar estilos
+            btn.className = "filter-option block w-full px-4 py-2 text-sm text-left text-gray-300 hover:bg-gray-700 hover:text-white";
+            
+            // Aplicar estilo activo
+            if (btn.id === 'btn-' + filterType) {
+                btn.className = "filter-option block w-full px-4 py-2 text-sm text-left text-orange-400 bg-gray-700/50 font-bold";
+            }
+        });
+
+        // 4. Manejar Estado Vacío
+        if (visibleCount === 0) {
+            emptyState.classList.remove('hidden');
+            if (filterType === 'active') {
+                title.innerText = "No tienes motos activas";
+                desc.innerText = "Registra una nueva moto para verla aquí.";
+            } else if (filterType === 'inactive') {
+                title.innerText = "No tienes motos inactivas";
+                desc.innerText = "Las motos que desactives aparecerán aquí.";
+            } else {
+                title.innerText = "Tu garaje está vacío";
+                desc.innerText = "Agrega tu primera moto para comenzar.";
+            }
+        } else {
+            emptyState.classList.add('hidden');
+        }
+    }
+
+    // Inicializar filtro 'active' al cargar la página
+    document.addEventListener('DOMContentLoaded', () => {
+        filterGarage('active');
+    });
+</script>
 
 {% endblock %}

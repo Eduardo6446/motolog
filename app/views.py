@@ -103,11 +103,22 @@ def profile(request):
     return redirect('login')
 
 def garage(request):
-    if 'user_id' in request.session:
-        user = User.objects.get(id=request.session['user_id'])
-        motorcycles = Motorcycle.objects.filter(owner=user, is_active=True)
-        return render(request, 'garage.html', {'motorcycles': motorcycles})
-    return redirect('login')
+    """
+    Muestra el garaje.
+    OPTIMIZACIÓN: Enviamos TODAS las motos (activas e inactivas).
+    El filtrado se hace instantáneamente en el navegador con JavaScript.
+    """
+    if 'user_id' not in request.session:
+        return redirect('login')
+    
+    user = User.objects.get(id=request.session['user_id'])
+    
+    # Obtenemos TODAS las motos del usuario
+    # Ordenamos por estado (activas primero) y luego por ID descendente (nuevas primero)
+    motorcycles = Motorcycle.objects.filter(owner=user).order_by('-is_active', '-id')
+
+    return render(request, 'garage.html', {'motorcycles': motorcycles})
+
 
 def map(request):
     return render(request, 'map.html', {})
