@@ -42,13 +42,20 @@
                 <input type="date" name="date" id="date" required class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm" style="color-scheme: dark;">
             </div>
 
-            <!-- Kilometraje en el Servicio -->
+            <!-- Kilometraje en el Servicio (VALIDADO) -->
             <div>
                 <label for="mileage-at-service" class="block text-sm font-medium text-gray-300">Kilometraje en el Servicio</label>
-                <input type="number" name="mileage-at-service" id="mileage-at-service" placeholder="e.g., 9100" required class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm">
+                <input type="number" 
+                       name="mileage-at-service" 
+                       id="mileage-at-service" 
+                       min="{{ motorcycle.mileage }}" 
+                       value="{{ motorcycle.mileage }}" 
+                       required 
+                       class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm">
+                <p class="mt-1 text-xs text-gray-500">Mínimo actual: {{ motorcycle.mileage }} km</p>
             </div>
 
-            <!-- FEEDBACK PARA LA IA (NUEVO) -->
+            <!-- FEEDBACK PARA LA IA -->
             <div class="sm:col-span-2 p-4 bg-gray-900/50 rounded-lg border border-gray-600 border-dashed">
                 <label class="block text-sm font-medium text-orange-400 mb-2">
                     🤖 Ayuda a la IA: ¿En qué estado estaba la pieza?
@@ -93,8 +100,8 @@
             <div class="sm:col-span-2">
                 <label for="cost" class="block text-sm font-medium text-gray-300">Costo (Opcional)</label>
                 <div class="relative mt-1 rounded-md shadow-sm">
-                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <span class="text-gray-500 sm:text-sm">$</span>
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none">
+                        <span class="text-gray-500 sm:text-sm">C$</span>
                     </div>
                     <input type="number" name="cost" id="cost" step="0.01" class="block w-full py-2 pl-7 pr-12 text-white bg-gray-700 border-gray-600 rounded-md focus:ring-orange-500 focus:border-orange-500" placeholder="0.00">
                     <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
@@ -124,7 +131,7 @@
     </form>
 </div>
 
-<!-- Reminder Modal (Sin Cambios en Estructura, solo estilos) -->
+<!-- Reminder Modal -->
 <div id="reminder-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-75 backdrop-blur-sm">
     <div class="w-full max-w-lg p-6 bg-gray-800 rounded-xl shadow-2xl border border-gray-700">
         <div class="flex items-center justify-between pb-3 border-b border-gray-700">
