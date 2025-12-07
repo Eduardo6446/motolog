@@ -7,7 +7,7 @@
     <div class="pb-6 mb-6">
         <a href="{% url 'garage' %}" class="text-sm text-orange-400 hover:underline">&larr; Volver al Garaje</a>
         <h2 class="mt-2 text-3xl font-bold">Agregar Nueva Motocicleta</h2>
-        <p class="text-gray-400">Ingresa los detalles de tu máquina para comenzar el seguimiento.</p>
+        <p class="text-gray-400">Selecciona tu modelo de nuestra base de datos certificada.</p>
     </div>
 
     <!-- Error Alert -->
@@ -18,33 +18,39 @@
     {% endif %}
 
     <!-- Add Motorcycle Form -->
-    <!-- IMPORTANTE: enctype es necesario para subir archivos (fotos) -->
     <form action="{% url 'motoadd' %}" method="POST" enctype="multipart/form-data" class="p-6 space-y-6 bg-gray-800 rounded-xl border border-gray-700">
         {% csrf_token %}
         
         <!-- Form Fields Grid -->
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
             
-            <!-- Marca -->
+            <!-- Marca (Dropdown) -->
             <div>
                 <label for="make" class="block text-sm font-medium text-gray-300">Marca</label>
-                <input type="text" name="make" id="make" required placeholder="Ej: Bajaj, Yamaha, Honda" 
-                       class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm transition-colors">
+                <select name="make" id="make" required 
+                        class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm transition-colors">
+                    <option value="" disabled selected>Selecciona una marca...</option>
+                    <!-- Se llenará con JS -->
+                </select>
             </div>
 
-            <!-- Modelo -->
+            <!-- Modelo (Dropdown Dependiente) -->
             <div>
                 <label for="model" class="block text-sm font-medium text-gray-300">Modelo</label>
-                <input type="text" name="model" id="model" required placeholder="Ej: Pulsar NS200" 
-                       class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm transition-colors">
-                <p class="mt-1 text-xs text-gray-500">Intenta usar el nombre oficial para que la IA lo reconozca mejor.</p>
+                <select name="model" id="model" required disabled
+                        class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    <option value="" disabled selected>Primero selecciona marca...</option>
+                </select>
+                <!-- Input oculto para enviar el nombre legible si se necesita, aunque el value del select es lo que importa -->
             </div>
 
-            <!-- Año -->
+            <!-- Año (Dropdown Dependiente) -->
             <div>
                 <label for="year" class="block text-sm font-medium text-gray-300">Año</label>
-                <input type="number" name="year" id="year" required placeholder="Ej: 2023" min="1900" max="2099"
-                       class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm transition-colors">
+                <select name="year" id="year" required disabled
+                        class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    <option value="" disabled selected>Selecciona modelo...</option>
+                </select>
             </div>
 
             <!-- Kilometraje -->
@@ -77,7 +83,6 @@
                             </svg>
                             <p class="mb-2 text-sm text-gray-400"><span class="font-semibold text-orange-400">Haz clic para subir</span> o arrastra y suelta</p>
                             <p class="text-xs text-gray-500">PNG, JPG o JPEG (Máx. 800x400px)</p>
-                            <!-- Script simple para mostrar nombre del archivo seleccionado -->
                             <p id="file-name" class="mt-2 text-sm text-green-400 font-medium"></p>
                         </div>
                         <input id="photo-upload" name="photo" type="file" class="hidden" accept="image/*" onchange="document.getElementById('file-name').textContent = this.files[0].name">
@@ -100,5 +105,92 @@
         </div>
     </form>
 </div>
+
+<script>
+    // --- DATOS MAESTROS DE MOTOS (Sincronizados con la IA) ---
+    const motoData = {
+        "Bajaj": [
+            { id: "Bajaj_Pulsar_NS200", name: "Pulsar NS200", years: [2018, 2024] },
+            { id: "Bajaj_Pulsar_NS160", name: "Pulsar NS160", years: [2017, 2024] },
+            { id: "Bajaj_Boxer_150", name: "Boxer 150", years: [2017, 2024] }
+        ],
+        "Hero": [
+            { id: "Hero_Hunk_160R_4V", name: "Hunk 160R 4V", years: [2022, 2024] },
+            { id: "Hero_Hunk_160R", name: "Hunk 160R", years: [2020, 2024] },
+            { id: "Hero_Hunk_150_SD", name: "Hunk 150 SD", years: [2018, 2024] },
+            { id: "Hero_Eco_150", name: "Eco 150", years: [2018, 2024] }
+        ],
+        "Genesis": [
+            { id: "Genesis_KA_150", name: "KA 150", years: [2018, 2024] },
+            { id: "Genesis_HJ-125_RK125", name: "HJ-125 (RK125)", years: [2018, 2024] }
+        ],
+        "Keeway": [
+            { id: "Keeway_RKS_125", name: "RKS 125", years: [2018, 2024] }
+        ],
+        "Genérica": [
+            { id: "Generica_Trabajo_150cc", name: "Moto Trabajo (125-150cc)", years: [2010, 2025] },
+            { id: "Generica_Urbana_250cc", name: "Moto Urbana (160-250cc)", years: [2015, 2025] }
+        ]
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const makeSelect = document.getElementById('make');
+        const modelSelect = document.getElementById('model');
+        const yearSelect = document.getElementById('year');
+
+        // 1. Poblar Marcas
+        for (const make in motoData) {
+            const option = document.createElement('option');
+            option.value = make;
+            option.textContent = make;
+            makeSelect.appendChild(option);
+        }
+
+        // 2. Cambio en Marca -> Poblar Modelos
+        makeSelect.addEventListener('change', function() {
+            modelSelect.innerHTML = '<option value="" disabled selected>Selecciona un modelo...</option>';
+            yearSelect.innerHTML = '<option value="" disabled selected>Selecciona modelo...</option>';
+            yearSelect.disabled = true;
+
+            const selectedMake = this.value;
+            if (motoData[selectedMake]) {
+                motoData[selectedMake].forEach(moto => {
+                    const option = document.createElement('option');
+                    option.value = moto.id; // IMPORTANTE: Valor para la IA (ej: Bajaj_Pulsar_NS200)
+                    option.textContent = moto.name; // Texto legible
+                    // Guardamos el rango de años en data attributes para usarlo luego
+                    option.dataset.minYear = moto.years[0];
+                    option.dataset.maxYear = moto.years[1];
+                    modelSelect.appendChild(option);
+                });
+                modelSelect.disabled = false;
+            } else {
+                modelSelect.disabled = true;
+            }
+        });
+
+        // 3. Cambio en Modelo -> Poblar Años
+        modelSelect.addEventListener('change', function() {
+            yearSelect.innerHTML = '<option value="" disabled selected>Selecciona el año...</option>';
+            
+            const selectedOption = this.options[this.selectedIndex];
+            const minYear = parseInt(selectedOption.dataset.minYear);
+            const maxYear = parseInt(selectedOption.dataset.maxYear);
+
+            if (!isNaN(minYear) && !isNaN(maxYear)) {
+                // Generar años en orden descendente (más nuevo primero)
+                for (let y = maxYear; y >= minYear; y--) {
+                    const option = document.createElement('option');
+                    option.value = y;
+                    option.textContent = y;
+                    yearSelect.appendChild(option);
+                }
+                yearSelect.disabled = false;
+            } else {
+                yearSelect.disabled = true;
+            }
+        });
+    });
+</script>
 
 {% endblock %}

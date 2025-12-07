@@ -27,14 +27,44 @@
                     </div>
                     <div>
                         <h4 class="font-bold text-orange-100">Recordatorio: {{ reminder.service_type }}</h4>
-                        <p class="text-sm text-gray-400">
+                        <div class="text-sm text-gray-400 mt-1">
                             {% if reminder.reminder_type == 'distance' %}
-                                Programado a los <span class="text-white font-bold">{{ reminder.next_service_at_mileage }} km</span>
-                                (Faltan {{ reminder.next_service_at_mileage|add:"-"|add:main_moto.mileage }} km)
+                                <!-- LÓGICA DE KILOMETRAJE -->
+                                {% if main_moto.mileage >= reminder.next_service_at_mileage %}
+                                    <!-- CASO VENCIDO -->
+                                    {% widthratio reminder.next_service_at_mileage 1 -1 as meta_negativa %}
+                                    <span class="text-red-500 font-bold bg-red-900/20 px-2 py-0.5 rounded border border-red-500/30">
+                                        ¡VENCIDO!
+                                    </span>
+                                    <span class="text-red-400 block mt-1">
+                                        Se pasó hace <b>{{ main_moto.mileage|add:meta_negativa }} km</b>
+                                    </span>
+                                {% else %}
+                                    <!-- CASO PENDIENTE -->
+                                    {% widthratio main_moto.mileage 1 -1 as actual_negativo %}
+                                    Programado a los <span class="text-white font-bold">{{ reminder.next_service_at_mileage }} km</span>
+                                    <span class="block text-orange-300 mt-0.5">
+                                        (Faltan <b>{{ reminder.next_service_at_mileage|add:actual_negativo }} km</b>)
+                                    </span>
+                                {% endif %}
+
                             {% else %}
-                                Programado para el <span class="text-white font-bold">{{ reminder.next_service_date }}</span>
+                                <!-- LÓGICA DE FECHA -->
+                                <!-- Nota: En Django templates comparar fechas directo es limitado sin filtros custom, 
+                                     pero podemos usar la fecha actual 'now' -->
+                                {% now "Y-m-d" as hoy_str %}
+                                {% if reminder.next_service_date|date:"Y-m-d" < hoy_str %}
+                                     <span class="text-red-500 font-bold bg-red-900/20 px-2 py-0.5 rounded border border-red-500/30">
+                                        ¡VENCIDO!
+                                    </span>
+                                    <span class="text-red-400 block mt-1">
+                                        Era para el {{ reminder.next_service_date }}
+                                    </span>
+                                {% else %}
+                                    Programado para el <span class="text-white font-bold">{{ reminder.next_service_date }}</span>
+                                {% endif %}
                             {% endif %}
-                        </p>
+                        </div>
                     </div>
                 </div>
                 {% endfor %}
@@ -73,7 +103,7 @@
                             <p class="text-3xl font-bold text-white font-mono">{{ main_moto.mileage }} <span class="text-lg text-gray-500">km</span></p>
                         </div>
                         <a href="{% url 'motodetails' moto_id=main_moto.id %}" class="px-5 py-2.5 bg-white text-gray-900 font-bold rounded-lg hover:bg-gray-200 transition-colors shadow-lg">
-                            Ver Diagnóstico IA
+                            Ver Diagnóstico
                         </a>
                     </div>
                 </div>
