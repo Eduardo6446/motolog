@@ -14,6 +14,8 @@ urlpatterns = [
     path('<int:moto_id>/details/', views.motodetails, name='motodetails'),
     path('motoadd/', views.motoadd, name='motoadd'),
     path('toggle_moto_status/<int:moto_id>/', views.toggle_moto_status, name='toggle_moto_status'),
+    path('moto/<int:moto_id>/addImage/', views.upload_moto_image, name='upload_moto_image'),
+    
     
     # Authentication URLs
     path('accounts/login/', views.login, name='login'),

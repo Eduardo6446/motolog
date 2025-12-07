@@ -2,7 +2,7 @@ import requests
 import json
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.models import User
-from .models import Profile, Motorcycle, MaintenanceLog, MaintenanceReminder
+from .models import MotoImage, Profile, Motorcycle, MaintenanceLog, MaintenanceReminder
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 
@@ -102,7 +102,6 @@ def profile(request):
         return render(request, 'profile.html', {'user': user, 'profile': profile})
     return redirect('login')
 
-# Asegúrate de tener esta función auxiliar arriba o cerca
 def get_moto_health_color(motorcycle):
     """
     Evalúa la salud global consultando TODOS los componentes clave.
@@ -281,6 +280,20 @@ def motodetails(request, moto_id):
     }
     return render(request, 'motodetails.html', context)
 
+
+def upload_moto_image(request, moto_id):
+    """Subida de múltiples fotos a la galería"""
+    if 'user_id' not in request.session: return redirect('login')
+    
+    user = User.objects.get(id=request.session['user_id'])
+    moto = get_object_or_404(Motorcycle, pk=moto_id, owner=user)
+    
+    if request.method == 'POST':
+        images = request.FILES.getlist('gallery_images')
+        for img in images:
+            MotoImage.objects.create(motorcycle=moto, image=img)
+            
+    return redirect('motodetails', moto_id=moto_id)
 
 # ... (motoadd, maintenance_add, auth... todo eso sigue igual) ...
 

@@ -85,3 +85,8 @@ class MaintenanceReminder(models.Model):
 
     def __str__(self):
         return f"Recordatorio: {self.service_type} para {self.motorcycle.nickname}"
+    
+class MotoImage(models.Model):
+    motorcycle = models.ForeignKey(Motorcycle, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='moto_gallery/')
+    created_at = models.DateTimeField(auto_now_add=True)

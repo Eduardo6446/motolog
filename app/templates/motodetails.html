@@ -5,7 +5,7 @@
 <!-- Cargar Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<div class="p-4 mx-auto max-w-7xl sm:p-6 lg:p-8">
+<div class="p-4 mx-auto max-w-7xl sm:p-6 lg:p-8 relative">
     
     <!-- 1. ENCABEZADO Y CONTROLES -->
     <div class="flex flex-col gap-4 pb-6 mb-6 border-b border-gray-700 sm:flex-row sm:items-center sm:justify-between">
@@ -32,7 +32,7 @@
                 </button>
             </form>
 
-            <!-- Botón de Escritorio (Oculto en móvil 'hidden sm:flex') -->
+            <!-- BOTÓN DE ESCRITORIO (Oculto en móviles 'hidden sm:flex') -->
             <a href="{% url 'maintenance_add' moto_id=motorcycle.id %}" class="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-bold text-gray-900 transition-colors bg-orange-500 rounded-lg hover:bg-orange-600 shadow-lg shadow-orange-500/20">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                 <span>Nuevo Mantenimiento</span>
@@ -93,21 +93,13 @@
         <div class="lg:col-span-2">
             <h3 class="mb-4 text-xl font-bold text-white">Diagnóstico de Componentes</h3>
             {% if predicciones %}
-            
-            <!-- GRID DE 2 COLUMNAS PARA DIAGNÓSTICOS -->
-            <!-- md:grid-cols-2 activa 2 columnas en pantallas medianas hacia arriba -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {% for item in predicciones %}
-                <!-- Tarjeta de Componente -->
-                <!-- Lógica: Si es el último elemento Y el total es impar (no divisible por 2), ocupa 2 columnas -->
                 <div class="p-4 transition-all duration-300 bg-gray-800 border border-gray-700 rounded-xl hover:border-gray-500 {% if forloop.last and not predicciones|length|divisibleby:2 %} md:col-span-2 {% endif %}">
                     <div class="flex flex-col justify-between h-full gap-4">
-                        
                         <div class="flex-1">
                             <div class="flex items-center justify-between mb-2">
                                 <h4 class="text-lg font-bold text-white capitalize truncate pr-2" title="{{ item.componente }}">{{ item.componente }}</h4>
-                                
-                                <!-- Badges de Estado Compactos -->
                                 {% if item.prediccion_ia.estado_probable == "fallo_critico" %}
                                     <span class="flex-shrink-0 px-2 py-0.5 text-[10px] font-bold text-red-900 bg-red-200 rounded-full animate-pulse">CRÍTICO</span>
                                 {% elif item.prediccion_ia.estado_probable == "muy_desgastado" %}
@@ -118,8 +110,6 @@
                                     <span class="flex-shrink-0 px-2 py-0.5 text-[10px] font-bold text-green-900 bg-green-200 rounded-full">OK</span>
                                 {% endif %}
                             </div>
-
-                            <!-- Barra de Vida -->
                             <div class="mb-2">
                                 <div class="flex justify-between mb-1 text-xs text-gray-400">
                                     <span>Desgaste</span>
@@ -134,12 +124,10 @@
                                     </div>
                                 </div>
                             </div>
-                            
                             <div class="flex justify-between items-end mt-2">
                                 <p class="text-[10px] text-gray-500 italic">
                                     Origen: {{ item.calculo.origen_dato|title|cut:"_" }} <br> Confianza IA: {{ item.prediccion_ia.confianza|stringformat:".0f" }}%
                                 </p>
-                                <!-- Acciones (Mini botón) -->
                                 <a href="{% url 'maintenance_add' moto_id=motorcycle.id %}" class="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors" title="Registrar">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                 </a>
@@ -157,83 +145,82 @@
         </div>
     </div>
 
-    <!-- 3. SECCIÓN INFERIOR: GRÁFICAS E HISTORIAL (ADAPTATIVO) -->
-    <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
+    <!-- 3. SECCIÓN FINANCIERA (GRÁFICAS) -->
+    <div class="grid grid-cols-1 gap-8 lg:grid-cols-2 mb-8">
         
-        <!-- COLUMNA IZQUIERDA: GRÁFICA DE GASTOS -->
-        <div class="lg:col-span-1">
-            <h3 class="mb-6 text-xl font-bold text-white flex items-center gap-3">
-                <svg class="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>
-                Análisis de Gastos
+        <!-- GASTOS POR TIPO -->
+        <div class="p-6 bg-gray-800 border border-gray-700 rounded-xl shadow-lg">
+            <h3 class="mb-4 text-lg font-bold text-white flex items-center gap-2">
+                <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>
+                Gastos por Categoría
             </h3>
-            <div class="p-6 bg-gray-800 border border-gray-700 rounded-xl shadow-lg relative min-h-[300px] flex items-center justify-center">
+            <div class="relative h-64 flex items-center justify-center">
                 {% if maintenance_logs %}
                     <canvas id="expensesChart"></canvas>
                 {% else %}
-                    <p class="text-gray-500 text-center text-sm">Registra mantenimientos con costo para ver tu gráfica de gastos.</p>
+                    <p class="text-gray-500 text-center text-sm">Sin datos de costos.</p>
                 {% endif %}
             </div>
         </div>
 
-        <!-- COLUMNA DERECHA: HISTORIAL DE SERVICIOS -->
-        <div class="lg:col-span-2">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-xl font-bold text-white flex items-center gap-3">
-                    <svg class="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 00-2-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                    Historial
-                </h3>
+        <!-- HISTÓRICO DE GASTOS -->
+        <div class="p-6 bg-gray-800 border border-gray-700 rounded-xl shadow-lg">
+            <h3 class="mb-4 text-lg font-bold text-white flex items-center gap-2">
+                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+                Evolución de Gastos
+            </h3>
+            <div class="relative h-64 flex items-center justify-center">
+                {% if maintenance_logs %}
+                    <canvas id="costHistoryChart"></canvas>
+                {% else %}
+                    <p class="text-gray-500 text-center text-sm">Registra mantenimientos para ver tu historial.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 
-                <!-- BOTONES DE ACCIÓN (ORDENAR / EXPORTAR) -->
-                <div class="flex gap-2">
-                    <!-- Exportar (NUEVO) -->
-                    <button onclick="exportTableToCSV('historial_mantenimiento.csv')" class="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-gray-300 bg-gray-800 border border-gray-600 rounded-lg shadow-sm hover:bg-gray-700 hover:text-white transition-colors" title="Exportar a CSV">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        Exportar
-                    </button>
-
-                    <!-- Dropdown Ordenar -->
-                    <div class="relative text-left">
-                        <button type="button" onclick="toggleSortMenu()" id="sort-menu-button" 
-                            class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-300 bg-gray-800 border border-gray-600 rounded-lg shadow-sm hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-orange-500 transition-colors">
-                            <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"></path></svg>
-                            <span id="current-sort-label" class="hidden sm:inline">Recientes</span>
-                            <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                        </button>
-
-                        <div id="sort-dropdown" class="absolute right-0 z-10 hidden w-48 mt-2 origin-top-right bg-gray-800 border border-gray-700 rounded-md shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none animate-fade-in-down">
-                            <div class="py-1" role="none">
-                                <button onclick="sortHistory('date_desc')" class="sort-option block w-full px-4 py-2 text-sm text-left text-orange-400 bg-gray-700/50 font-bold" role="menuitem">Más Recientes</button>
-                                <button onclick="sortHistory('date_asc')" class="sort-option block w-full px-4 py-2 text-sm text-left text-gray-300 hover:bg-gray-700 hover:text-white" role="menuitem">Más Antiguos</button>
-                                <button onclick="sortHistory('service')" class="sort-option block w-full px-4 py-2 text-sm text-left text-gray-300 hover:bg-gray-700 hover:text-white" role="menuitem">Servicio (A-Z)</button>
-                                <button onclick="sortHistory('cost')" class="sort-option block w-full px-4 py-2 text-sm text-left text-gray-300 hover:bg-gray-700 hover:text-white" role="menuitem">Costo (Mayor)</button>
-                            </div>
+    <!-- 4. HISTORIAL Y GALERÍA -->
+    <div class="space-y-12">
+        <!-- Historial -->
+        <div>
+            <h3 class="mb-6 text-xl font-bold text-white flex items-center gap-3">
+                <svg class="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 00-2-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                Historial de Servicios
+            </h3>
+            <!-- Lista Móvil -->
+            <div class="md:hidden space-y-4">
+                {% for log in maintenance_logs %}
+                <div class="p-4 bg-gray-800 rounded-xl border border-gray-700 shadow-sm">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-400/10 text-orange-400 border border-orange-400/20 capitalize mb-1">{{ log.get_service_type_display }}</span>
+                            <p class="text-xs text-gray-400 mt-1 flex items-center gap-1">{{ log.date|date:"d M, Y" }}</p>
                         </div>
+                        <div class="text-right"><span class="block text-green-400 font-bold text-sm">{% if log.cost %}$ {{ log.cost }}{% else %}-{% endif %}</span></div>
+                    </div>
+                    <div class="flex items-center gap-4 text-sm text-gray-300 mb-2 p-2 bg-gray-900/50 rounded-lg">
+                        <span class="font-mono">{{ log.mileage_at_service }} km</span>
                     </div>
                 </div>
+                {% endfor %}
             </div>
-
-            {% if maintenance_logs %}
-            
-            <!-- VISTA ESCRITORIO: TABLA (Visible en MD para arriba) -->
+            <!-- Tabla Escritorio -->
             <div class="hidden md:block overflow-hidden bg-gray-800 border border-gray-700 rounded-xl shadow-lg">
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-left text-sm">
                         <thead class="bg-gray-900 text-gray-400 uppercase font-medium">
                             <tr>
-                                <th class="px-6 py-4 cursor-pointer hover:text-white" onclick="sortHistory('date_desc')">Fecha</th>
-                                <th class="px-6 py-4 cursor-pointer hover:text-white" onclick="sortHistory('service')">Servicio</th>
+                                <th class="px-6 py-4">Fecha</th>
+                                <th class="px-6 py-4">Servicio</th>
                                 <th class="px-6 py-4">Km</th>
-                                <th class="px-6 py-4 cursor-pointer hover:text-white" onclick="sortHistory('cost')">Costo</th>
+                                <th class="px-6 py-4">Costo</th>
                                 <th class="px-6 py-4">Notas</th>
                             </tr>
                         </thead>
-                        <tbody id="history-body" class="divide-y divide-gray-700">
+                        <tbody class="divide-y divide-gray-700">
                             {% for log in maintenance_logs %}
-                            <tr class="hover:bg-gray-700/50 transition-colors" 
-                                data-date="{{ log.date|date:'Y-m-d' }}" 
-                                data-service="{{ log.get_service_type_display }}" 
-                                data-cost="{{ log.cost|default:0 }}">
-                                <td class="px-6 py-4 text-white font-medium whitespace-nowrap">{{ log.date|date:"d M, Y" }}</td>
+                            <tr class="hover:bg-gray-700/50 transition-colors">
+                                <td class="px-6 py-4 text-white font-medium">{{ log.date|date:"d M, Y" }}</td>
                                 <td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-700 text-orange-300 border border-orange-500/30 capitalize">{{ log.get_service_type_display }}</span></td>
                                 <td class="px-6 py-4 text-gray-300 font-mono">{{ log.mileage_at_service }} km</td>
                                 <td class="px-6 py-4 text-gray-300">{% if log.cost %}<span class="text-green-400">$ {{ log.cost }}</span>{% else %}-{% endif %}</td>
@@ -244,52 +231,31 @@
                     </table>
                 </div>
             </div>
+        </div>
 
-            <!-- VISTA MÓVIL: LISTA DE TARJETAS (Visible solo en SM o menor) -->
-            <div id="history-mobile-list" class="md:hidden space-y-4">
-                {% for log in maintenance_logs %}
-                <div class="mobile-card p-4 bg-gray-800 rounded-xl border border-gray-700 shadow-sm"
-                     data-date="{{ log.date|date:'Y-m-d' }}" 
-                     data-service="{{ log.get_service_type_display }}" 
-                     data-cost="{{ log.cost|default:0 }}">
-                    
-                    <div class="flex justify-between items-start mb-3">
-                        <div>
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-400/10 text-orange-400 border border-orange-400/20 capitalize mb-1">
-                                {{ log.get_service_type_display }}
-                            </span>
-                            <p class="text-xs text-gray-400 mt-1 flex items-center gap-1">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                {{ log.date|date:"d M, Y" }}
-                            </p>
-                        </div>
-                        <div class="text-right">
-                            <span class="block text-green-400 font-bold text-sm">
-                                {% if log.cost %}$ {{ log.cost }}{% else %}-{% endif %}
-                            </span>
-                        </div>
+        <!-- Galería -->
+        <div>
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-white flex items-center gap-3">
+                    <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    Galería
+                </h3>
+                <button id="btn-upload-gallery" class="text-sm text-purple-400 hover:text-purple-300 flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> Agregar
+                </button>
+            </div>
+            {% if motorcycle.images.all %}
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {% for img in motorcycle.images.all %}
+                    <div class="relative group aspect-square bg-gray-800 rounded-xl overflow-hidden border border-gray-700">
+                        <img src="{{ img.image.url }}" class="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110">
                     </div>
-                    
-                    <div class="flex items-center gap-4 text-sm text-gray-300 mb-2 p-2 bg-gray-900/50 rounded-lg">
-                        <div class="flex items-center gap-2">
-                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                            <span class="font-mono">{{ log.mileage_at_service }} km</span>
-                        </div>
-                    </div>
-
-                    {% if log.notes %}
-                    <p class="text-sm text-gray-500 italic border-t border-gray-700 pt-2 mt-2 truncate">
-                        "{{ log.notes }}"
-                    </p>
-                    {% endif %}
+                    {% endfor %}
                 </div>
-                {% endfor %}
-            </div>
-
             {% else %}
-            <div class="py-12 text-center bg-gray-800 border border-gray-700 rounded-xl">
-                <p class="text-gray-400">Aún no hay registros de mantenimiento.</p>
-            </div>
+                <div class="p-8 text-center bg-gray-800/50 border-2 border-dashed border-gray-700 rounded-xl cursor-pointer hover:border-purple-500/50" id="empty-gallery-trigger">
+                    <p class="text-sm text-gray-400 font-medium">Subir fotos a la galería</p>
+                </div>
             {% endif %}
         </div>
     </div>
@@ -300,156 +266,111 @@
         <div class="bg-red-900/10 border border-red-900/50 rounded-xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div>
                 <h4 class="font-bold text-red-400">Eliminar Motocicleta</h4>
-                <p class="text-sm text-gray-400 mt-1">Esta acción es permanente. Perderás todo el historial y los diagnósticos de IA asociados a este vehículo.</p>
+                <p class="text-sm text-gray-400 mt-1">Esta acción es permanente.</p>
             </div>
-            <button onclick="alert('Funcionalidad de borrado desactivada para la demo.')" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-colors shadow-lg shadow-red-900/20 whitespace-nowrap">
-                Eliminar Moto
-            </button>
+            <button onclick="alert('Desactivada para demo.')" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg">Eliminar Moto</button>
         </div>
     </div>
-
 </div>
 
-<!-- BOTÓN FLOTANTE (FAB) PARA AGREGAR MANTENIMIENTO (MÓVIL) -->
-<a href="{% url 'maintenance_add' moto_id=motorcycle.id %}" class="fixed bottom-24 right-6 z-40 p-4 text-gray-900 bg-orange-500 rounded-full shadow-2xl sm:hidden hover:bg-orange-600 transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 active:scale-95 border-2 border-orange-400">
+<!-- BOTÓN FLOTANTE (FAB) PARA MÓVIL (VISIBLE SOLO EN SM) -->
+<a href="{% url 'maintenance_add' moto_id=motorcycle.id %}" class="fixed bottom-24 right-6 z-40 p-4 text-gray-900 bg-orange-500 rounded-full shadow-2xl sm:hidden hover:bg-orange-600 transition-transform hover:scale-110 focus:outline-none border-2 border-orange-400">
     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
 </a>
 
-<!-- MODAL KILOMETRAJE -->
+<!-- MODALES (KM y GALERÍA) -->
 <div id="km-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-75 backdrop-blur-sm">
-    <div class="w-full max-w-md p-6 bg-gray-800 rounded-xl shadow-2xl border border-gray-700 transform transition-all scale-100">
+    <div class="w-full max-w-md p-6 bg-gray-800 rounded-xl shadow-2xl border border-gray-700">
         <div class="flex items-center justify-between pb-4 border-b border-gray-700">
             <h3 class="text-xl font-bold text-white">Actualizar Odómetro</h3>
-            <button id="close-km-modal" class="text-gray-400 hover:text-white transition-colors">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
+            <button id="close-km-modal" class="text-gray-400 hover:text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
         </div>
         <form action="{% url 'update_mileage' moto_id=motorcycle.id %}" method="POST" class="mt-6">
             {% csrf_token %}
-            <div class="mb-6">
-                <label for="new_mileage" class="block text-sm font-medium text-gray-300 mb-2">Nuevo Kilometraje</label>
-                <div class="relative">
-                    <input type="number" name="new_mileage" id="new_mileage" required min="{{ motorcycle.mileage }}" value="{{ motorcycle.mileage }}" class="block w-full pl-4 pr-12 py-3 text-xl font-mono text-white bg-gray-900 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all">
-                    <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none"><span class="text-gray-500 font-bold">km</span></div>
-                </div>
-            </div>
+            <input type="number" name="new_mileage" id="new_mileage" required min="{{ motorcycle.mileage }}" value="{{ motorcycle.mileage }}" class="block w-full pl-4 py-3 text-xl font-mono bg-gray-900 border border-gray-600 rounded-lg text-white mb-6">
             <div class="flex justify-end gap-3">
-                <button type="button" id="cancel-km-modal" class="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors">Cancelar</button>
-                <button type="submit" class="px-6 py-2 text-sm font-bold text-gray-900 bg-orange-500 rounded-lg hover:bg-orange-600 transition-colors shadow-lg shadow-orange-500/20">Guardar</button>
+                <button type="button" id="cancel-km-modal" class="px-4 py-2 text-sm bg-gray-700 rounded-lg text-white">Cancelar</button>
+                <button type="submit" class="px-6 py-2 text-sm bg-orange-500 rounded-lg text-white font-bold">Guardar</button>
             </div>
         </form>
     </div>
 </div>
 
-<style>
-    @keyframes fadeInDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-    .animate-fade-in-down { animation: fadeInDown 0.2s ease-out; }
-</style>
+<div id="gallery-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-75 backdrop-blur-sm">
+    <div class="w-full max-w-md p-6 bg-gray-800 rounded-xl shadow-2xl border border-gray-700">
+        <div class="flex items-center justify-between pb-4 border-b border-gray-700">
+            <h3 class="text-xl font-bold text-white">Subir Fotos</h3>
+            <button id="close-gallery-modal" class="text-gray-400 hover:text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+        </div>
+        <form action="{% url 'upload_moto_image' moto_id=motorcycle.id %}" method="POST" enctype="multipart/form-data" class="mt-6">
+            {% csrf_token %}
+            <div class="mb-6">
+                <label class="block w-full h-32 border-2 border-gray-600 border-dashed rounded-lg cursor-pointer hover:bg-gray-700 flex flex-col items-center justify-center">
+                    <span class="text-sm text-gray-400">Seleccionar archivos</span>
+                    <input type="file" name="gallery_images" multiple class="hidden" onchange="this.parentElement.querySelector('span').textContent = this.files.length + ' archivos seleccionados'">
+                </label>
+            </div>
+            <div class="flex justify-end">
+                <button type="submit" class="px-6 py-2 text-sm font-bold text-white bg-purple-600 rounded-lg">Subir</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 <script>
-    // --- LÓGICA DE GRÁFICA ---
+    // --- GRÁFICAS ---
     {% if maintenance_logs %}
     document.addEventListener('DOMContentLoaded', function() {
-        const ctx = document.getElementById('expensesChart');
-        if (ctx) {
+        const ctxD = document.getElementById('expensesChart');
+        if (ctxD) {
             const rawData = {};
             {% for log in maintenance_logs %}
                 if ({{ log.cost|default:0 }} > 0) {
                     const label = "{{ log.get_service_type_display }}";
-                    const cost = parseFloat("{{ log.cost }}".replace(',', '.')); 
-                    if (rawData[label]) rawData[label] += cost;
-                    else rawData[label] = cost;
+                    const cost = parseFloat("{{ log.cost }}".replace(',', '.'));
+                    rawData[label] = (rawData[label] || 0) + cost;
                 }
             {% endfor %}
-
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(rawData),
-                    datasets: [{
-                        data: Object.values(rawData),
-                        backgroundColor: ['#f97316', '#ef4444', '#eab308', '#84cc16', '#06b6d4', '#8b5cf6'],
-                        borderColor: '#1f2937', borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af' } } }
+            new Chart(ctxD, { type: 'doughnut', data: { labels: Object.keys(rawData), datasets: [{ data: Object.values(rawData), backgroundColor: ['#f97316', '#ef4444', '#eab308', '#84cc16', '#06b6d4', '#8b5cf6'], borderColor: '#1f2937', borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#9ca3af', boxWidth: 12 } } } } });
+        }
+        const ctxL = document.getElementById('costHistoryChart');
+        if (ctxL) {
+            const historyData = [];
+            {% for log in maintenance_logs reversed %}
+                if ({{ log.cost|default:0 }} > 0) {
+                    historyData.push({ x: "{{ log.date|date:'Y-m-d' }}", y: parseFloat("{{ log.cost }}".replace(',', '.')) });
                 }
-            });
+            {% endfor %}
+            new Chart(ctxL, { type: 'line', data: { labels: historyData.map(d => d.x), datasets: [{ label: 'Gasto ($)', data: historyData.map(d => d.y), borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderWidth: 2, tension: 0.3, fill: true }] }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { color: '#9ca3af' }, grid: { color: '#374151' } }, y: { ticks: { color: '#9ca3af' }, grid: { color: '#374151' } } }, plugins: { legend: { display: false } } } });
         }
     });
     {% endif %}
 
-    // --- LÓGICA DE ORDENAMIENTO (ACTUALIZADA PARA MÓVIL) ---
-    function toggleSortMenu() {
-        document.getElementById('sort-dropdown').classList.toggle('hidden');
-    }
-
-    document.addEventListener('click', function(event) {
-        const menu = document.getElementById('sort-dropdown');
-        const button = document.getElementById('sort-menu-button');
-        if (menu && button && !button.contains(event.target) && !menu.contains(event.target)) {
-            menu.classList.add('hidden');
-        }
-    });
-
-    // Función auxiliar para ordenar un contenedor
-    function sortContainer(containerId, itemSelector, criteria) {
-        const container = document.getElementById(containerId);
-        if(!container) return; 
-        
-        const items = Array.from(container.querySelectorAll(itemSelector));
-        
-        items.sort((a, b) => {
-            if (criteria === 'date_desc') return new Date(b.dataset.date) - new Date(a.dataset.date);
-            if (criteria === 'date_asc') return new Date(a.dataset.date) - new Date(b.dataset.date);
-            if (criteria === 'service') return a.dataset.service.localeCompare(b.dataset.service);
-            if (criteria === 'cost') return parseFloat(b.dataset.cost) - parseFloat(a.dataset.cost);
-        });
-
-        items.forEach(item => container.appendChild(item));
-    }
-
-    function sortHistory(criteria) {
-        const labelBtn = document.getElementById('current-sort-label');
-        document.getElementById('sort-dropdown').classList.add('hidden');
-
-        if (criteria === 'date_desc') labelBtn.innerText = "Más Recientes";
-        else if (criteria === 'date_asc') labelBtn.innerText = "Más Antiguos";
-        else if (criteria === 'service') labelBtn.innerText = "Servicio (A-Z)";
-        else if (criteria === 'cost') labelBtn.innerText = "Costo (Mayor)";
-
-        // Ordenar Tabla (Escritorio)
-        sortContainer('history-body', 'tr', criteria);
-        
-        // Ordenar Lista (Móvil)
-        sortContainer('history-mobile-list', 'div.mobile-card', criteria);
-
-        // Actualizar estilos del menú
-        document.querySelectorAll('.sort-option').forEach(btn => {
-            btn.className = "sort-option block w-full px-4 py-2 text-sm text-left text-gray-300 hover:bg-gray-700 hover:text-white";
-            if (btn.getAttribute('onclick').includes(criteria)) {
-                btn.className = "sort-option block w-full px-4 py-2 text-sm text-left text-orange-400 bg-gray-700/50 font-bold";
-            }
-        });
-    }
-
-    // --- LÓGICA MODAL ---
+    // --- MODALES ---
     document.addEventListener('DOMContentLoaded', function () {
-        const modal = document.getElementById('km-modal');
-        const openBtn = document.getElementById('btn-update-km');
-        const closeBtn = document.getElementById('close-km-modal');
-        const cancelBtn = document.getElementById('cancel-km-modal');
+        const kmModal = document.getElementById('km-modal');
+        const kmOpen = document.getElementById('btn-update-km');
+        const kmClose = document.getElementById('close-km-modal');
+        const kmCancel = document.getElementById('cancel-km-modal');
         const kmInput = document.getElementById('new_mileage');
+        
+        if(kmOpen) kmOpen.addEventListener('click', () => { kmModal.classList.remove('hidden'); setTimeout(() => kmInput.focus(), 100); });
+        if(kmClose) kmClose.addEventListener('click', () => kmModal.classList.add('hidden'));
+        if(kmCancel) kmCancel.addEventListener('click', () => kmModal.classList.add('hidden'));
 
-        function openModal() { modal.classList.remove('hidden'); setTimeout(() => kmInput.focus(), 100); }
-        function closeModal() { modal.classList.add('hidden'); }
+        const galModal = document.getElementById('gallery-modal');
+        const galOpen = document.getElementById('btn-upload-gallery');
+        const galEmpty = document.getElementById('empty-gallery-trigger');
+        const galClose = document.getElementById('close-gallery-modal');
 
-        if(openBtn) openBtn.addEventListener('click', openModal);
-        if(closeBtn) closeBtn.addEventListener('click', closeModal);
-        if(cancelBtn) cancelBtn.addEventListener('click', closeModal);
-        modal.addEventListener('click', function(e) { if (e.target === modal) closeModal(); });
+        if(galOpen) galOpen.addEventListener('click', () => galModal.classList.remove('hidden'));
+        if(galEmpty) galEmpty.addEventListener('click', () => galModal.classList.remove('hidden'));
+        if(galClose) galClose.addEventListener('click', () => galModal.classList.add('hidden'));
+
+        window.addEventListener('click', (e) => {
+            if (e.target === kmModal) kmModal.classList.add('hidden');
+            if (e.target === galModal) galModal.classList.add('hidden');
+        });
     });
 </script>
 
