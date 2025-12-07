@@ -76,7 +76,7 @@ def index(request):
         }
         return render(request, 'index.html', context)
 
-    return render(request, 'index.html', {})
+    return redirect('login')
 
 # --- NUEVA VISTA: CAMBIAR MOTO ---
 def switch_moto(request, moto_id):
