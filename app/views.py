@@ -98,8 +98,8 @@ def profile(request):
     if 'user_id' in request.session:
         user = User.objects.get(id=request.session['user_id'])
         profile, created = Profile.objects.get_or_create(user=user)
-        motorcycles = Motorcycle.objects.filter(owner=user, is_active=True)
-        return render(request, 'profile.html', {'user': user, 'profile': profile, 'motorcycles': motorcycles})
+        #motorcycles = Motorcycle.objects.filter(owner=user, is_active=True)
+        return render(request, 'profile.html', {'user': user, 'profile': profile})
     return redirect('login')
 
 def garage(request):
