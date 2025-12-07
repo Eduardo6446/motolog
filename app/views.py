@@ -1,5 +1,7 @@
 import requests
 import json
+from itertools import chain
+from operator import attrgetter
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.models import User
 from django.db.models import Sum
@@ -32,7 +34,7 @@ COMPONENTES_DASHBOARD = [
 
 # ... (index, profile, garage, map se quedan igual) ...
 def index(request):
-    """Dashboard principal"""
+    """Dashboard principal con Actividad Mixta (Mantenimiento + Viajes)"""
     if 'user_id' in request.session:
         user = User.objects.get(id=request.session['user_id'])
         
@@ -43,28 +45,37 @@ def index(request):
 
         motorcycles = Motorcycle.objects.filter(owner=user, is_active=True)
         
-        # --- LÓGICA DE SELECCIÓN DE MOTO ---
+        # Selección de moto
         main_moto = None
-        
-        # 1. ¿El usuario ya eligió una moto en esta sesión?
         selected_moto_id = request.session.get('selected_moto_id')
-        
         if selected_moto_id:
-            # Verificamos que esa moto aún exista y sea suya
             main_moto = motorcycles.filter(id=selected_moto_id).first()
-        
-        # 2. Si no ha elegido (o la moto se borró), tomamos la primera por defecto
         if not main_moto:
             main_moto = motorcycles.first()
-            # Guardamos esta elección por defecto en la sesión para consistencia
             if main_moto:
                 request.session['selected_moto_id'] = main_moto.id
 
-        maintenance_logs = []
+        recent_activity = [] # Lista combinada
         maintenance_reminders = []
 
         if main_moto:
-            maintenance_logs = MaintenanceLog.objects.filter(motorcycle=main_moto)[:5]
+            # 1. Obtener Mantenimientos
+            m_logs = MaintenanceLog.objects.filter(motorcycle=main_moto)
+            
+            # 2. Obtener Viajes
+            t_logs = TripLog.objects.filter(motorcycle=main_moto)
+            
+            # 3. Combinar y Ordenar por fecha (El más reciente primero)
+            # Usamos attrgetter('date') porque ambos modelos tienen un campo 'date'
+            activity_list = sorted(
+                chain(m_logs, t_logs),
+                key=attrgetter('date'),
+                reverse=True
+            )
+            
+            # Tomamos solo los últimos 6 eventos para no saturar el dashboard
+            recent_activity = activity_list[:6]
+            
             maintenance_reminders = MaintenanceReminder.objects.filter(motorcycle=main_moto, is_active=True)
 
         context = {
@@ -72,7 +83,7 @@ def index(request):
             'profile': profile,
             'motorcycles': motorcycles,
             'main_moto': main_moto,
-            'maintenance_logs': maintenance_logs,
+            'recent_activity': recent_activity, # Enviamos la lista mixta
             'maintenance_reminders': maintenance_reminders,
         }
         return render(request, 'index.html', context)
