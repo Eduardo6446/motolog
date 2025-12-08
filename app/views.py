@@ -4,11 +4,10 @@ from itertools import chain
 from operator import attrgetter
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.models import User
-from django.db.models import Sum, Max # <--- IMPORTANTE: Importamos Max
+from django.db.models import Sum, Max 
 from .models import MotoImage, Profile, Motorcycle, MaintenanceLog, MaintenanceReminder, TripLog
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-
 
 import dotenv
 dotenv.load_dotenv()
@@ -91,7 +90,19 @@ def profile(request):
         return render(request, 'profile.html', {'user': user, 'profile': profile})
     return redirect('login')
 
-# --- OPTIMIZACIÓN 1: Semáforo usando /predict_full ---
+# --- FUNCION AUXILIAR PARA ID INTELIGENTE ---
+def construir_moto_id(make, model):
+    """
+    Evita duplicar la marca si ya está en el modelo.
+    Ej: Make='Hero', Model='Hero Hunk' -> Retorna 'Hero Hunk' (no 'Hero Hero Hunk')
+    """
+    make = str(make).strip()
+    model = str(model).strip()
+    if model.lower().startswith(make.lower()):
+        return model
+    return f"{make} {model}"
+
+# --- SEMÁFORO INTELIGENTE ---
 def get_moto_health_color(motorcycle):
     """
     Evalúa la salud global consultando TODA la moto en una sola petición.
@@ -101,8 +112,11 @@ def get_moto_health_color(motorcycle):
     historial_usuario = {h['service_type']: h['max_km'] for h in history_qs}
 
     # 2. Consultar a la IA (Endpoint Full)
+    # FIX: Usamos la función auxiliar para no duplicar marca
+    moto_id_completo = construir_moto_id(motorcycle.make, motorcycle.model)
+    
     payload = {
-        "modelo_id": motorcycle.model,
+        "modelo_id": moto_id_completo,
         "km_actual": motorcycle.mileage,
         "historial_usuario": historial_usuario
     }
@@ -123,24 +137,19 @@ def get_moto_health_color(motorcycle):
             advertencias = 0
             
             # --- DEDUPLICACIÓN INTELIGENTE ---
-            # Agrupamos por ID y nos quedamos con el que tenga el intervalo MAYOR.
-            # Esto elimina el "Aceite 500km" si existe el "Aceite 5000km".
             items_procesados = {}
 
             for item in diagnostico_global:
-                # Usamos componente_id si viene, si no el nombre
                 uid = item.get('componente_id') or item.get('componente')
                 intervalo = item.get('datos_tecnicos', {}).get('intervalo_fabricante', 0)
 
                 if uid in items_procesados:
-                    # Conflicto: ¿Es este intervalo mayor al que ya guardé?
                     prev_intervalo = items_procesados[uid].get('datos_tecnicos', {}).get('intervalo_fabricante', 0)
                     if intervalo > prev_intervalo:
-                        items_procesados[uid] = item # Reemplazamos por el de mayor rango
+                        items_procesados[uid] = item
                 else:
                     items_procesados[uid] = item
             
-            # Ahora contamos sobre la lista limpia
             for item in items_procesados.values():
                 estado = item['analisis_ia']['diagnostico']
                 if estado == 'fallo_critico':
@@ -152,8 +161,7 @@ def get_moto_health_color(motorcycle):
             if advertencias >= 1: return 'yellow'
             return 'green'
             
-    except Exception as e:
-        print(f"Error Semáforo Garage: {e}") 
+    except Exception:
         return 'gray'
     
     return 'gray'
@@ -229,7 +237,6 @@ def toggle_moto_status(request, moto_id):
         moto.save()
     return redirect('motodetails', moto_id=moto_id)
 
-# --- OPTIMIZACIÓN 2: Detalles usando /predict_full ---
 def motodetails(request, moto_id):
     if 'user_id' not in request.session: return redirect('login')
         
@@ -246,9 +253,11 @@ def motodetails(request, moto_id):
     predicciones_display = []
     error_api = None
     
-    # 3. Llamada Única a la IA
+    # 3. Llamada Única a la IA (FIX: No duplicar marca)
+    moto_id_completo = construir_moto_id(motorcycle.make, motorcycle.model)
+    
     payload = {
-        "modelo_id": motorcycle.model,
+        "modelo_id": moto_id_completo,
         "km_actual": motorcycle.mileage,
         "historial_usuario": historial_usuario
     }
@@ -273,7 +282,6 @@ def motodetails(request, moto_id):
                 intervalo = item.get('datos_tecnicos', {}).get('intervalo_fabricante', 0)
 
                 if uid in items_procesados:
-                    # Conflicto: Mantenemos el de intervalo MAYOR (Prioridad a mantenimiento regular sobre despegue)
                     prev_intervalo = items_procesados[uid].get('datos_tecnicos', {}).get('intervalo_fabricante', 0)
                     if intervalo > prev_intervalo:
                         items_procesados[uid] = item
@@ -288,13 +296,22 @@ def motodetails(request, moto_id):
                 
                 datos_tec = item['datos_tecnicos']
                 km_pieza = datos_tec['km_pieza_actual']
-                origen = datos_tec['origen']
+                origen_codigo = datos_tec['origen'] 
                 pct_uso = datos_tec['porcentaje_uso']
                 
-                # Texto amigable
-                origen_txt = "De Fábrica"
-                if origen == 'historial_real':
+                # --- TRADUCCIÓN AMIGABLE DEL ORIGEN ---
+                origen_txt = "Estado Desconocido"
+                
+                if "servicio_inicial" in origen_codigo:
+                    # Ej: "servicio_inicial_500km" -> "Despegue (500 km)"
+                    km_meta = origen_codigo.split('_')[-1]
+                    origen_txt = f"Despegue ({km_meta})"
+                elif "teorico_recurrente" in origen_codigo:
+                    origen_txt = "Ciclo Normal"
+                elif "historial_real" in origen_codigo:
                     origen_txt = f"Hace {km_pieza} km"
+                else:
+                    origen_txt = "Cálculo Teórico"
                 
                 # Barra visual
                 urgencia_visual = pct_uso / 100.0
@@ -317,7 +334,7 @@ def motodetails(request, moto_id):
         else:
             error_api = f"Error Servidor: {response.status_code}"
 
-    except Exception as e:
+    except Exception:
         error_api = "Sin conexión IA"
 
     context = {
@@ -327,7 +344,6 @@ def motodetails(request, moto_id):
         'maintenance_logs': logs
     }
     return render(request, 'motodetails.html', context)
-
 
 def upload_moto_image(request, moto_id):
     if 'user_id' not in request.session: return redirect('login')
@@ -371,6 +387,7 @@ def motoadd(request):
         return redirect('garage')
     return render(request, 'motoadd.html', {})
 
+# --- FORMULARIO DINÁMICO (V3 + MLOps) ---
 def maintenance_add(request, moto_id):
     if 'user_id' not in request.session: return redirect('login')
     
@@ -417,15 +434,17 @@ def maintenance_add(request, moto_id):
                 if 'next_service_at_mileage' in reminder_data or 'next_service_date' in reminder_data:
                     MaintenanceReminder.objects.create(**reminder_data)
             
-            # Notificar al usuario (Feedback Visual)
+            # Notificar al usuario
             messages.success(request, 'Mantenimiento registrado correctamente.')
 
             # REPORTE A LA IA (MLOps)
             if condicion_reportada:
                 try:
+                    # FIX: Usar ID inteligente también aquí
+                    moto_id_completo = construir_moto_id(motorcycle.make, motorcycle.model)
                     payload_reporte = {
                         "usuario_id_hash": f"user_{user.id}", 
-                        "modelo_id": motorcycle.model, 
+                        "modelo_id": moto_id_completo, 
                         "componente_id": service_type, 
                         "accion_realizada": "REEMPLAZAR", 
                         "km_realizado_usuario": int(mileage_at_service), 
@@ -442,9 +461,11 @@ def maintenance_add(request, moto_id):
     # LOGICA GET (MOSTRAR FORMULARIO)
     opciones_mantenimiento = []
     try:
+        # FIX: Usar ID inteligente para obtener opciones
+        moto_id_completo = construir_moto_id(motorcycle.make, motorcycle.model)
         response = requests.get(
             f'{FLASK_API_URL}/get_maintenance_options',
-            params={'modelo_id': motorcycle.model},
+            params={'modelo_id': moto_id_completo},
             timeout=1.5 
         )
         if response.status_code == 200:
@@ -525,9 +546,11 @@ def update_mileage(request, moto_id):
                     motorcycle.mileage = new_km_int
                     motorcycle.save()
                     try:
+                        # FIX: Usar ID inteligente
+                        moto_id_completo = construir_moto_id(motorcycle.make, motorcycle.model)
                         payload = {
                             "usuario_id_hash": f"user_{user.id}",
-                            "modelo_id": motorcycle.model,
+                            "modelo_id": moto_id_completo,
                             "km_actual": new_km_int
                         }
                         requests.post(f'{FLASK_API_URL}/actualizar_kilometraje', json=payload, auth=API_AUTH, timeout=2)
@@ -565,4 +588,3 @@ def change_password(request):
         user.save()
         return redirect('profile')
     return render(request, 'change_password.html')
-
