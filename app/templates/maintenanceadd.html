@@ -20,20 +20,14 @@
                 <label for="service-type" class="block text-sm font-medium text-gray-300">Tipo de Servicio</label>
                 <select id="service-type" name="service-type" required class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm">
                     <option value="" disabled selected>Selecciona un servicio...</option>
-                    <option value="aceite_motor">Cambio de Aceite de Motor</option>
-                    <option value="filtro_aceite">Cambio de Filtro de Aceite</option>
-                    <option value="filtro_aire">Limpieza/Cambio Filtro de Aire</option>
-                    <option value="bujias">Cambio de Bujías</option>
-                    <option value="kit_arrastre">Mantenimiento Kit de Arrastre</option>
-                    <option value="frenos_delanteros">Frenos Delanteros</option>
-                    <option value="frenos_traseros">Frenos Traseros</option>
-                    <option value="neumaticos">Cambio de Neumáticos</option>
-                    <option value="bateria">Batería</option>
-                    <option value="ajuste_valvulas">Ajuste de Válvulas</option>
-                    <option value="suspension">Mantenimiento de Suspensión</option>
-                    <option value="other">Otro</option>
+                    
+                    <!-- BUCLE DINÁMICO: Carga solo lo que la moto necesita (Backend V3) -->
+                    {% for opcion in service_options %}
+                        <option value="{{ opcion.id }}">{{ opcion.label }}</option>
+                    {% endfor %}
+                    
                 </select>
-                <p class="mt-1 text-xs text-gray-500">Selecciona el componente exacto para ayudar a la IA.</p>
+                <p class="mt-1 text-xs text-gray-500">Opciones personalizadas para tu modelo.</p>
             </div>
 
             <!-- Fecha del Servicio (PRE-LLENADA CON HOY) -->
@@ -77,7 +71,7 @@
                     </div>
                     <!-- Opción 2: Normal -->
                     <div class="relative">
-                        <input class="sr-only peer" type="radio" name="condicion_reportada" id="cond_normal" value="desgaste_normal">
+                        <input class="sr-only peer" type="radio" name="condicion_reportada" id="cond_normal" value="desgaste_normal" checked>
                         <label class="flex flex-col items-center justify-center p-2 text-gray-400 bg-gray-800 border border-gray-600 rounded-lg cursor-pointer peer-checked:border-blue-500 peer-checked:text-blue-500 hover:bg-gray-700 transition-all" for="cond_normal">
                             <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                             <span class="text-xs font-medium">Normal</span>
@@ -151,7 +145,7 @@
             <p class="text-sm text-gray-400">¿Quieres que te avisemos para el próximo servicio?</p>
 
             <div class="mt-4 space-y-4">
-                  <div>
+                 <div>
                     <label for="reminder-type" class="block text-sm font-medium text-gray-300">Tipo de Recordatorio</label>
                     <select id="reminder-type" name="reminder-type" form="maintenance-form" class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm">
                         <option value="none">No crear recordatorio</option>
