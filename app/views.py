@@ -112,7 +112,7 @@ def get_moto_health_color(motorcycle):
             f'{FLASK_API_URL}/predict_full',
             json=payload,
             auth=API_AUTH,
-            timeout=2.0 
+            timeout=30.0 
         )
 
         if response.status_code == 200:
@@ -258,7 +258,7 @@ def motodetails(request, moto_id):
             f'{FLASK_API_URL}/predict_full',
             json=payload,
             auth=API_AUTH,
-            timeout=2.0
+            timeout=30.0
         )
         
         if response.status_code == 200:
