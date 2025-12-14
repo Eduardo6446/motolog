@@ -261,6 +261,7 @@ def motodetails(request, moto_id):
                     items_procesados[uid] = item
             
             for item in items_procesados.values():
+                comp_id = item["componente_id"]
                 comp_nombre = item['componente']
                 estado_ia = item['analisis_ia']['diagnostico']
                 confianza = item['analisis_ia']['confianza']
@@ -285,6 +286,7 @@ def motodetails(request, moto_id):
                 urgencia_visual_css = min(urgencia_visual, 1.0)
                 
                 predicciones_display.append({
+                    "componente_id": comp_id,
                     "componente": comp_nombre,
                     "prediccion_ia": { 
                         "estado_probable": estado_ia, 
@@ -333,7 +335,7 @@ def motoadd(request):
         plate = request.POST.get('plate')
         
         owner_id = request.session.get('user_id')
-        if not all([make, model, year, km, nickname]):
+        if not all([make, model, year, km]):
             return render(request, 'motoadd.html', {'error': 'Campos obligatorios'})
         
         photo = request.FILES.get('photo')
@@ -359,6 +361,7 @@ def maintenance_add(request, moto_id):
     
     user = User.objects.get(id=request.session['user_id'])
     motorcycle = get_object_or_404(Motorcycle, owner=user, pk=moto_id)
+    componente_preseleccionado = request.GET.get('componente')
     
     if request.method == 'POST':
         service_type = request.POST.get('service-type', '').strip()
@@ -445,7 +448,8 @@ def maintenance_add(request, moto_id):
 
     context = {
         'motorcycle': motorcycle,
-        'service_options': opciones_mantenimiento
+        'service_options': opciones_mantenimiento,
+        'componente_preseleccionado': componente_preseleccionado
     }
     return render(request, 'maintenanceadd.html', context)
 

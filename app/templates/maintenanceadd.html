@@ -23,7 +23,7 @@
                     
                     <!-- BUCLE DINÁMICO: Carga solo lo que la moto necesita (Backend V3) -->
                     {% for opcion in service_options %}
-                        <option value="{{ opcion.id }}">{{ opcion.label }}</option>
+                        <option value="{{ opcion.id }}" {% if opcion.id == componente_preseleccionado %}selected{% endif %}>{{ opcion.label }}</option>
                     {% endfor %}
                     
                 </select>

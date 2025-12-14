@@ -2,6 +2,10 @@
 
 {% block content %}
 
+{% load moto_extras %}
+
+{% load static %}
+
 <!-- Cargar Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -12,14 +16,15 @@
         <div>
             <a href="{% url 'garage' %}" class="text-sm text-orange-400 hover:underline">&larr; Volver al Garaje</a>
             <div class="flex items-center gap-3 mt-1">
-                <h2 class="text-3xl font-bold text-white">{{ motorcycle.nickname|default:motorcycle.model }}</h2>
+                <h2 class="text-3xl font-bold text-white">{{ motorcycle.nickname|default:motorcycle.model|model_desc }}</h2>
                 {% if motorcycle.is_active %}
                     <span class="px-2 py-0.5 text-xs font-bold text-green-900 bg-green-500/20 text-green-400 border border-green-500/30 rounded-full">Activa</span>
                 {% else %}
                     <span class="px-2 py-0.5 text-xs font-bold text-gray-400 bg-gray-700 border border-gray-600 rounded-full">Inactiva</span>
                 {% endif %}
             </div>
-            <p class="text-gray-400">{{ motorcycle.make }} {{ motorcycle.model }} ({{ motorcycle.year }})</p>
+            <p class="text-gray-400">{{ motorcycle.make }} {{ motorcycle.model|model_desc }} ({{ motorcycle.year }})</p>
+            <p class="text-gray-400">Fecha de registro: {{ motorcycle.created_at|date:"d \d\e M \d\e Y" }}</p>
         </div>
         
         <div class="flex flex-wrap gap-3">
@@ -125,12 +130,40 @@
                                 </div>
                             </div>
                             <div class="flex justify-between items-end mt-2">
-                                <p class="text-[10px] text-gray-500 italic">
-                                    Origen: {{ item.calculo.origen_dato|title|cut:"_" }} <br> Confianza IA: {{ item.prediccion_ia.confianza|stringformat:".0f" }}%
-                                </p>
-                                <a href="{% url 'maintenance_add' moto_id=motorcycle.id %}" class="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors" title="Registrar">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                </a>
+                                    <p class="text-[10px] text-gray-500 italic">
+                                        Origen: {{ item.calculo.origen_dato|title|cut:"_" }} <br> Confianza IA: {{ item.prediccion_ia.confianza|stringformat:".0f" }}%
+                                    </p>
+                                    <div class="flex">
+                                    <button type="button" class="p-1.5 rounded-lg transition-colors hover:bg-gray-700" title="Ver información"
+                                        onclick="openComponentModal('{{ item.componente_id }}', '{{ item.componente }}', '{{ item.calculo.urgencia }}')">
+                                        {% if item.calculo.urgencia > 0.9 %}
+                                        {% with "#ef4444" as info_color %}
+                                        <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="{{ info_color }}">
+                                            <path
+                                                d="M440-280h80v-240h-80v240Zm40-320q17 0 28.5-11.5T520-640q0-17-11.5-28.5T480-680q-17 0-28.5 11.5T440-640q0 17 11.5 28.5T480-600Zm0 520q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z" />
+                                        </svg>
+                                        {% endwith %}
+                                        {% elif item.calculo.urgencia > 0.7 %}
+                                        {% with "#f97316" as info_color %}
+                                        <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="{{ info_color }}">
+                                            <path
+                                                d="M440-280h80v-240h-80v240Zm40-320q17 0 28.5-11.5T520-640q0-17-11.5-28.5T480-680q-17 0-28.5 11.5T440-640q0 17 11.5 28.5T480-600Zm0 520q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z" />
+                                        </svg>
+                                        {% endwith %}
+                                        {% else %}
+                                        {% with "#22c55e" as info_color %}
+                                        <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="{{ info_color }}">
+                                            <path
+                                                d="M440-280h80v-240h-80v240Zm40-320q17 0 28.5-11.5T520-640q0-17-11.5-28.5T480-680q-17 0-28.5 11.5T440-640q0 17 11.5 28.5T480-600Zm0 520q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z" />
+                                        </svg>
+                                        {% endwith %}
+                                        {% endif %}
+                                    </button>
+
+                                    <a href="{% url 'maintenance_add' moto_id=motorcycle.id %}?componente={{ item.componente_id }}" class="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors" title="Registrar">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                    </a>
+                                    </div>
                             </div>
                         </div>
                     </div>
@@ -316,6 +349,115 @@
         </form>
     </div>
 </div>
+
+<div id="componentModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60">
+    <div class="w-full max-w-xl p-6 bg-gray-800 border border-gray-700 rounded-xl shadow-xl">
+
+        <div id="modalHeader" class="flex items-center justify-between pb-3 mb-4 border-b">
+            <h3 id="modalTitle" class="text-lg font-bold text-white"></h3>
+            <button onclick="closeComponentModal()" class="text-gray-400 hover:text-white">✕</button>
+        </div>
+
+        <div id="modalBody" class="space-y-4 text-sm text-gray-300"></div>
+
+        <div class="mt-6 text-right">
+            <button onclick="closeComponentModal()"
+                class="px-4 py-2 text-sm font-semibold text-gray-900 bg-gray-200 rounded-lg hover:bg-white">
+                Cerrar
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<script src="{% static 'scripts/component_catalog.js' %}"></script>
+
+<script>
+    function openComponentModal(componentId, componentName, urgencia_string) {
+        urgencia = Number(urgencia_string.replace(",", "."));
+
+        const modal = document.getElementById('componentModal');
+        const title = document.getElementById('modalTitle');
+        const body = document.getElementById('modalBody');
+        const header = document.getElementById('modalHeader');
+
+        const data = COMPONENT_CATALOG[componentId];
+
+        let estadoKey = 'normal';
+        let estadoLabel = 'NORMAL';
+        let color = '#22c55e';
+
+        if (urgencia > 0.9) {
+            estadoKey = 'critico';
+            estadoLabel = 'CRÍTICO';
+            color = '#ef4444';
+        } else if (urgencia > 0.7) {
+            estadoKey = 'atencion';
+            estadoLabel = 'ATENCIÓN';
+            color = '#f97316';
+        }
+
+        title.textContent = componentName;
+        header.style.borderColor = color;
+
+        body.innerHTML = data ? `
+        <div class="space-y-4">
+
+            <div>
+                <span class="text-xs text-gray-400">Estado actual</span>
+                <p class="font-bold" style="color:${color}">${estadoLabel}</p>
+            </div>
+
+            <div>
+                <span class="text-xs text-gray-400">Descripción</span>
+                <p>${data.descripcion}</p>
+            </div>
+
+            <div>
+                <span class="text-xs text-gray-400">Función principal</span>
+                <p>${data.funcion_principal}</p>
+            </div>
+
+            <div>
+                <span class="text-xs text-gray-400">Síntomas de desgaste</span>
+                <ul class="list-disc list-inside">
+                    ${data.sintomas_desgaste.map(s => `<li>${s}</li>`).join('')}
+                </ul>
+            </div>
+
+            <div>
+                <span class="text-xs text-gray-400">¿Qué pasa si no se atiende?</span>
+                <p>${data.consecuencias[estadoKey]}</p>
+            </div>
+
+            <div>
+                <span class="text-xs text-gray-400">Recomendación general</span>
+                <p>${data.recomendacion_general}</p>
+            </div>
+
+            <div>
+                <span class="text-xs text-gray-400">Impacto en seguridad</span>
+                <p class="font-semibold">${data.impacto_seguridad}</p>
+            </div>
+
+        </div>
+    ` : `
+        <div class="text-gray-400 italic">
+            No hay información detallada disponible para este componente.
+        </div>
+    `;
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closeComponentModal() {
+        const modal = document.getElementById('componentModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+</script>
+
 
 <script>
     // --- GRÁFICAS ---
