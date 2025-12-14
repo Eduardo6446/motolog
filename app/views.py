@@ -4,27 +4,84 @@ from itertools import chain
 from operator import attrgetter
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.models import User
-from django.db.models import Sum, Max # <--- IMPORTANTE: Importamos Max
+from django.db.models import Sum, Max
 from .models import MotoImage, Profile, Motorcycle, MaintenanceLog, MaintenanceReminder, TripLog
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-
-
 import dotenv
-dotenv.load_dotenv()
-
-# Cargar credenciales desde .env
 import os
+
+dotenv.load_dotenv()
 
 AUTH_USERNAME = os.getenv('AUTH_USERNAME', 'default_user')
 AUTH_PASSWORD = os.getenv('AUTH_PASSWORD', 'default_password')
-
-# --- CONFIGURACIÓN ---
 FLASK_API_URL = 'http://127.0.0.1:5000'
 API_AUTH = (AUTH_USERNAME, AUTH_PASSWORD) 
 
+# --- HELPERS ---
+def get_moto_health_color(motorcycle):
+    """
+    Evalúa la salud global.
+    """
+    # 1. Agregación de historial
+    history_qs = MaintenanceLog.objects.filter(motorcycle=motorcycle).values('service_type').annotate(max_km=Max('mileage_at_service'))
+    historial_usuario = {h['service_type']: h['max_km'] for h in history_qs}
+
+    payload = {
+        "modelo_id": motorcycle.model,
+        "km_actual": motorcycle.mileage,
+        "historial_usuario": historial_usuario
+    }
+
+    try:
+        response = requests.post(
+            f'{FLASK_API_URL}/predict_full',
+            json=payload,
+            auth=API_AUTH,
+            timeout=30.0 
+        )
+
+        if response.status_code == 200:
+            data = response.json()
+            diagnostico_global = data.get('diagnostico_global', [])
+            
+            criticos = 0
+            advertencias = 0
+            
+            # Deduplicación: Priorizar intervalos mayores (Ej: Aceite 5000 sobre Aceite 500)
+            items_procesados = {}
+
+            for item in diagnostico_global:
+                uid = item.get('componente_id') or item.get('componente')
+                intervalo = item.get('datos_tecnicos', {}).get('intervalo_fabricante', 0)
+
+                if uid in items_procesados:
+                    prev_intervalo = items_procesados[uid].get('datos_tecnicos', {}).get('intervalo_fabricante', 0)
+                    if intervalo > prev_intervalo:
+                        items_procesados[uid] = item
+                else:
+                    items_procesados[uid] = item
+            
+            for item in items_procesados.values():
+                estado = item['analisis_ia']['diagnostico']
+                if estado == 'fallo_critico':
+                    criticos += 1
+                elif estado == 'muy_desgastado':
+                    advertencias += 1
+            
+            if criticos > 0: return 'red'
+            if advertencias >= 1: return 'yellow'
+            return 'green'
+            
+    except Exception as e:
+        print(f"Error Semáforo: {e}") 
+        return 'gray'
+    
+    return 'gray'
+
+# --- VISTAS ---
+
 def index(request):
-    """Dashboard principal con Actividad Mixta (Mantenimiento + Viajes)"""
     if 'user_id' in request.session:
         user = User.objects.get(id=request.session['user_id'])
         
@@ -35,7 +92,6 @@ def index(request):
 
         motorcycles = Motorcycle.objects.filter(owner=user, is_active=True)
         
-        # Selección de moto
         main_moto = None
         selected_moto_id = request.session.get('selected_moto_id')
         if selected_moto_id:
@@ -49,13 +105,9 @@ def index(request):
         maintenance_reminders = []
 
         if main_moto:
-            # 1. Obtener Mantenimientos
             m_logs = MaintenanceLog.objects.filter(motorcycle=main_moto)
-            
-            # 2. Obtener Viajes
             t_logs = TripLog.objects.filter(motorcycle=main_moto)
             
-            # 3. Combinar y Ordenar
             activity_list = sorted(
                 chain(m_logs, t_logs),
                 key=attrgetter('date'),
@@ -90,73 +142,6 @@ def profile(request):
         profile, created = Profile.objects.get_or_create(user=user)
         return render(request, 'profile.html', {'user': user, 'profile': profile})
     return redirect('login')
-
-# --- OPTIMIZACIÓN 1: Semáforo usando /predict_full ---
-def get_moto_health_color(motorcycle):
-    """
-    Evalúa la salud global consultando TODA la moto en una sola petición.
-    """
-    # 1. Construir historial usando AGREGACIÓN (DB side)
-    history_qs = MaintenanceLog.objects.filter(motorcycle=motorcycle).values('service_type').annotate(max_km=Max('mileage_at_service'))
-    historial_usuario = {h['service_type']: h['max_km'] for h in history_qs}
-
-    # 2. Consultar a la IA (Endpoint Full)
-    payload = {
-        "modelo_id": motorcycle.model,
-        "km_actual": motorcycle.mileage,
-        "historial_usuario": historial_usuario
-    }
-
-    try:
-        response = requests.post(
-            f'{FLASK_API_URL}/predict_full',
-            json=payload,
-            auth=API_AUTH,
-            timeout=30.0 
-        )
-
-        if response.status_code == 200:
-            data = response.json()
-            diagnostico_global = data.get('diagnostico_global', [])
-            
-            criticos = 0
-            advertencias = 0
-            
-            # --- DEDUPLICACIÓN INTELIGENTE ---
-            # Agrupamos por ID y nos quedamos con el que tenga el intervalo MAYOR.
-            # Esto elimina el "Aceite 500km" si existe el "Aceite 5000km".
-            items_procesados = {}
-
-            for item in diagnostico_global:
-                # Usamos componente_id si viene, si no el nombre
-                uid = item.get('componente_id') or item.get('componente')
-                intervalo = item.get('datos_tecnicos', {}).get('intervalo_fabricante', 0)
-
-                if uid in items_procesados:
-                    # Conflicto: ¿Es este intervalo mayor al que ya guardé?
-                    prev_intervalo = items_procesados[uid].get('datos_tecnicos', {}).get('intervalo_fabricante', 0)
-                    if intervalo > prev_intervalo:
-                        items_procesados[uid] = item # Reemplazamos por el de mayor rango
-                else:
-                    items_procesados[uid] = item
-            
-            # Ahora contamos sobre la lista limpia
-            for item in items_procesados.values():
-                estado = item['analisis_ia']['diagnostico']
-                if estado == 'fallo_critico':
-                    criticos += 1
-                elif estado == 'muy_desgastado':
-                    advertencias += 1
-            
-            if criticos > 0: return 'red'
-            if advertencias >= 1: return 'yellow'
-            return 'green'
-            
-    except Exception as e:
-        print(f"Error Semáforo Garage: {e}") 
-        return 'gray'
-    
-    return 'gray'
 
 def garage(request):
     if 'user_id' not in request.session: return redirect('login')
@@ -229,24 +214,20 @@ def toggle_moto_status(request, moto_id):
         moto.save()
     return redirect('motodetails', moto_id=moto_id)
 
-# --- OPTIMIZACIÓN 2: Detalles usando /predict_full ---
 def motodetails(request, moto_id):
     if 'user_id' not in request.session: return redirect('login')
         
     user = User.objects.get(id=request.session['user_id'])
     motorcycle = get_object_or_404(Motorcycle, pk=moto_id, owner=user)
     
-    # 1. Obtener logs para la tabla visual
     logs = MaintenanceLog.objects.filter(motorcycle=motorcycle).order_by('-date')
     
-    # 2. Construir Historial Matemático usando AGREGACIÓN
     history_qs = MaintenanceLog.objects.filter(motorcycle=motorcycle).values('service_type').annotate(max_km=Max('mileage_at_service'))
     historial_usuario = {h['service_type']: h['max_km'] for h in history_qs}
 
     predicciones_display = []
     error_api = None
     
-    # 3. Llamada Única a la IA
     payload = {
         "modelo_id": motorcycle.model,
         "km_actual": motorcycle.mileage,
@@ -265,22 +246,20 @@ def motodetails(request, moto_id):
             data = response.json()
             diagnostico_global = data.get('diagnostico_global', [])
             
-            # --- DEDUPLICACIÓN INTELIGENTE (Visual) ---
             items_procesados = {}
-
             for item in diagnostico_global:
                 uid = item.get('componente_id') or item.get('componente')
                 intervalo = item.get('datos_tecnicos', {}).get('intervalo_fabricante', 0)
 
                 if uid in items_procesados:
-                    # Conflicto: Mantenemos el de intervalo MAYOR (Prioridad a mantenimiento regular sobre despegue)
+                    # MANTENER el de mayor intervalo para evitar que tareas de despegue (ej 500km)
+                    # opaquen a las tareas recurrentes (ej 5000km)
                     prev_intervalo = items_procesados[uid].get('datos_tecnicos', {}).get('intervalo_fabricante', 0)
                     if intervalo > prev_intervalo:
                         items_procesados[uid] = item
                 else:
                     items_procesados[uid] = item
             
-            # 4. Mapear respuesta filtrada
             for item in items_procesados.values():
                 comp_nombre = item['componente']
                 estado_ia = item['analisis_ia']['diagnostico']
@@ -291,17 +270,19 @@ def motodetails(request, moto_id):
                 origen = datos_tec['origen']
                 pct_uso = datos_tec['porcentaje_uso']
                 
-                # Texto amigable
-                origen_txt = "De Fábrica"
+                origen_txt = "Sin Historial (Total)"
                 if origen == 'historial_real':
                     origen_txt = f"Hace {km_pieza} km"
                 
-                # Barra visual
+                # Visual logic update: Handle cases > 100% cleanly
                 urgencia_visual = pct_uso / 100.0
                 if estado_ia == 'fallo_critico': 
-                    urgencia_visual = 1.0
+                    urgencia_visual = max(urgencia_visual, 1.0) # Asegurar barra llena
                 elif estado_ia == 'muy_desgastado' and urgencia_visual < 0.8:
                     urgencia_visual = 0.8
+                
+                # Cap visual at 100% for CSS width, but keep data logic intact
+                urgencia_visual_css = min(urgencia_visual, 1.0)
                 
                 predicciones_display.append({
                     "componente": comp_nombre,
@@ -310,8 +291,10 @@ def motodetails(request, moto_id):
                         "confianza": float(confianza) 
                     },
                     "calculo": { 
-                        "urgencia": urgencia_visual, 
-                        "origen_dato": origen_txt 
+                        "urgencia": urgencia_visual, # Valor real para lógica de colores
+                        "urgencia_css": urgencia_visual_css, # Valor topeado para width de barra
+                        "origen_dato": origen_txt,
+                        "pct_texto": pct_uso
                     }
                 })
         else:
@@ -377,7 +360,6 @@ def maintenance_add(request, moto_id):
     user = User.objects.get(id=request.session['user_id'])
     motorcycle = get_object_or_404(Motorcycle, owner=user, pk=moto_id)
     
-    # LOGICA POST (GUARDAR)
     if request.method == 'POST':
         service_type = request.POST.get('service-type', '').strip()
         date = request.POST.get('date')
@@ -400,6 +382,7 @@ def maintenance_add(request, moto_id):
                 notes=notes
             )
             
+            # Actualizar odómetro si es mayor
             if int(mileage_at_service) > motorcycle.mileage:
                 motorcycle.mileage = mileage_at_service
                 motorcycle.save()
@@ -417,10 +400,9 @@ def maintenance_add(request, moto_id):
                 if 'next_service_at_mileage' in reminder_data or 'next_service_date' in reminder_data:
                     MaintenanceReminder.objects.create(**reminder_data)
             
-            # Notificar al usuario (Feedback Visual)
             messages.success(request, 'Mantenimiento registrado correctamente.')
 
-            # REPORTE A LA IA (MLOps)
+            # REPORTE A LA IA
             if condicion_reportada:
                 try:
                     payload_reporte = {
@@ -439,7 +421,6 @@ def maintenance_add(request, moto_id):
             messages.error(request, 'Ocurrió un error al guardar.')
             return redirect('maintenance_add', moto_id=moto_id)
 
-    # LOGICA GET (MOSTRAR FORMULARIO)
     opciones_mantenimiento = []
     try:
         response = requests.get(
@@ -512,7 +493,6 @@ def logout(request):
     return redirect('login')
 
 def update_mileage(request, moto_id):
-    """Actualización rápida de odómetro + Sincronización IA"""
     if 'user_id' not in request.session: return redirect('login')
     if request.method == 'POST':
         user = User.objects.get(id=request.session['user_id'])
@@ -524,14 +504,6 @@ def update_mileage(request, moto_id):
                 if new_km_int > motorcycle.mileage:
                     motorcycle.mileage = new_km_int
                     motorcycle.save()
-                    try:
-                        payload = {
-                            "usuario_id_hash": f"user_{user.id}",
-                            "modelo_id": motorcycle.model,
-                            "km_actual": new_km_int
-                        }
-                        requests.post(f'{FLASK_API_URL}/actualizar_kilometraje', json=payload, auth=API_AUTH, timeout=2)
-                    except Exception: pass
             except ValueError: pass
     return redirect('motodetails', moto_id=moto_id)
 
@@ -565,4 +537,3 @@ def change_password(request):
         user.save()
         return redirect('profile')
     return render(request, 'change_password.html')
-
