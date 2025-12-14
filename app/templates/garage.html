@@ -2,6 +2,8 @@
 
 {% block content %}
 
+{% load moto_extras %}
+
 <div class="p-4 mx-auto max-w-7xl sm:p-6 lg:p-8">
     
     <!-- Header y Buscador -->
@@ -64,7 +66,7 @@
         <!-- Agregamos data-attributes para el buscador JS -->
         <a href="{% url 'motodetails' moto_id=motorcycle.id %}" 
            class="moto-card group relative block h-full no-underline transition-all duration-300 transform scale-100 opacity-100"
-           data-search="{{ motorcycle.nickname|lower }} {{ motorcycle.model|lower }} {{ motorcycle.plate_number|lower }} {{ motorcycle.make|lower }}"
+           data-search="{{ motorcycle.nickname|lower }} {{ motorcycle.model|model_desc|lower }} {{ motorcycle.plate_number|lower }} {{ motorcycle.make|lower }}"
            data-status="{% if motorcycle.is_active %}active{% else %}inactive{% endif %}">
            
             <div class="flex flex-col h-full overflow-hidden bg-gray-800 border border-gray-700 rounded-xl 
@@ -75,7 +77,7 @@
                 <div class="relative h-48 overflow-hidden bg-gray-900">
                     {% if motorcycle.photo %}
                         <img src="{{ motorcycle.photo.url }}" 
-                             alt="{{ motorcycle.model }}"
+                             alt="{{ motorcycle.model|model_desc }}"
                              class="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110">
                     {% else %}
                         <img src="https://placehold.co/400x300/1f2937/4b5563?text=Moto" 
@@ -120,7 +122,7 @@
                     <div class="flex items-start justify-between">
                         <div class="min-w-0">
                             <p class="text-xs font-medium tracking-wider text-orange-400 uppercase truncate">{{ motorcycle.make }}</p>
-                            <h4 class="mt-1 text-lg font-bold text-white truncate group-hover:text-orange-100">{{ motorcycle.model }}</h4>
+                            <h4 class="mt-1 text-lg font-bold text-white truncate group-hover:text-orange-100">{{ motorcycle.model|model_desc }}</h4>
                         </div>
                     </div>
                     
@@ -138,7 +140,7 @@
                         {% if motorcycle.plate_number %}
                         <div class="flex items-center gap-2 text-sm text-gray-500">
                             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z"></path></svg>
-                            <span class="font-mono bg-gray-900 px-1.5 py-0.5 rounded text-xs border border-gray-700 text-gray-300 tracking-wide">{{ motorcycle.plate_number }}</span>
+                            <span class="font-mono bg-gray-900 px-1.5 py-0.5 rounded text-xs border border-gray-700 text-gray-300 tracking-wide">{{ motorcycle.plate_number|plate_format }}</span>
                         </div>
                         {% endif %}
                     </div>
