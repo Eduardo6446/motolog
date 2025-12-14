@@ -361,69 +361,112 @@ def maintenance_add(request, moto_id):
     
     user = User.objects.get(id=request.session['user_id'])
     motorcycle = get_object_or_404(Motorcycle, owner=user, pk=moto_id)
-    componente_preseleccionado = request.GET.get('componente')
     
+    # Detectar Modo Múltiple desde la URL
+    mode = request.GET.get('mode', 'single')
+    componente_preseleccionado = request.GET.get('componente', '')
+
     if request.method == 'POST':
-        service_type = request.POST.get('service-type', '').strip()
+        # Datos comunes para todos los registros
         date = request.POST.get('date')
         mileage_at_service = request.POST.get('mileage-at-service')
-        cost = request.POST.get('cost') or None
+        cost_total = request.POST.get('cost') or 0
         notes = request.POST.get('notes')
-        condicion_reportada = request.POST.get('condicion_reportada') 
+        condicion_reportada = request.POST.get('condicion_reportada')
         
-        if not all([service_type, date, mileage_at_service]): 
-            messages.error(request, 'Faltan campos obligatorios.')
-            return redirect('maintenance_add', moto_id=moto_id)
+        # LÓGICA HÍBRIDA: Detectar lista (múltiple) o item único (single)
+        service_types_list = request.POST.getlist('service_types') # Checkboxes
+        single_service = request.POST.get('service-type')          # Select
         
-        try:
-            MaintenanceLog.objects.create(
-                motorcycle=motorcycle, 
-                service_type=service_type, 
-                date=date, 
-                mileage_at_service=int(mileage_at_service), 
-                cost=cost, 
-                notes=notes
-            )
+        servicios_a_procesar = []
+        if service_types_list:
+            servicios_a_procesar = service_types_list
+        elif single_service:
+            servicios_a_procesar = [single_service]
             
-            # Actualizar odómetro si es mayor
+        if not servicios_a_procesar or not date or not mileage_at_service:
+            messages.error(request, 'Faltan campos obligatorios.')
+            return redirect(f'/maintenance/{moto_id}/add?mode={mode}')
+
+        try:
+            # Dividir costo entre items si es múltiple (opcional, o asignar 0 a los extras)
+            # Para simplificar, asignamos el costo al primer item o lo dividimos. 
+            # Vamos a asignar el costo total al primer item para no perder la suma, y 0 a los demás,
+            # o dividirlo equitativamente. Dividir es más lógico para gráficas.
+            cost_per_item = float(cost_total) / len(servicios_a_procesar) if cost_total else None
+
+            # Actualizar Odómetro (Una sola vez)
             if int(mileage_at_service) > motorcycle.mileage:
-                motorcycle.mileage = mileage_at_service
+                motorcycle.mileage = int(mileage_at_service)
                 motorcycle.save()
 
+            # Procesar cada servicio
+            for idx, s_type in enumerate(servicios_a_procesar):
+                MaintenanceLog.objects.create(
+                    motorcycle=motorcycle, 
+                    service_type=s_type, 
+                    date=date, 
+                    mileage_at_service=int(mileage_at_service), 
+                    cost=cost_per_item, 
+                    notes=notes
+                )
+
+                # Reporte individual a la IA
+                if condicion_reportada:
+                    try:
+                        payload_reporte = {
+                            "usuario_id_hash": f"user_{user.id}", 
+                            "modelo_id": motorcycle.model, 
+                            "componente_id": s_type, 
+                            "accion_realizada": "REEMPLAZAR", 
+                            "km_realizado_usuario": int(mileage_at_service), 
+                            "condicion_reportada": condicion_reportada
+                        }
+                        requests.post(f'{FLASK_API_URL}/reportar_mantenimiento', 
+                                    data=json.dumps(payload_reporte), 
+                                    headers={'Content-Type': 'application/json'}, 
+                                    auth=API_AUTH, timeout=2)
+                    except Exception: pass
+
+            # Procesar Recordatorio (Solo uno genérico o asociado al primer item para no spammear)
             reminder_type = request.POST.get('reminder-type')
             if reminder_type and reminder_type != 'none':
-                MaintenanceReminder.objects.filter(motorcycle=motorcycle, service_type__icontains=service_type, is_active=True).update(is_active=False)
-                reminder_data = {'motorcycle': motorcycle, 'service_type': f"Próximo {service_type}", 'reminder_type': reminder_type, 'is_active': True}
+                # Si es múltiple, creamos un recordatorio genérico o basado en el primer item seleccionado
+                main_service_ref = servicios_a_procesar[0] 
+                
+                # Desactivar recordatorios viejos relacionados
+                for s_type in servicios_a_procesar:
+                    MaintenanceReminder.objects.filter(motorcycle=motorcycle, service_type__icontains=s_type, is_active=True).update(is_active=False)
+                
+                reminder_label = f"Próximo {main_service_ref}" if len(servicios_a_procesar) == 1 else "Próximo Mantenimiento General"
+                
+                reminder_data = {
+                    'motorcycle': motorcycle, 
+                    'service_type': reminder_label, 
+                    'reminder_type': reminder_type, 
+                    'is_active': True
+                }
+                
                 if reminder_type == 'distance':
                     val = request.POST.get('next-service-mileage')
                     if val: reminder_data['next_service_at_mileage'] = int(mileage_at_service) + int(val)
                 elif reminder_type == 'date':
                     val = request.POST.get('next-service-date')
                     if val: reminder_data['next_service_date'] = val
+                
                 if 'next_service_at_mileage' in reminder_data or 'next_service_date' in reminder_data:
                     MaintenanceReminder.objects.create(**reminder_data)
             
-            messages.success(request, 'Mantenimiento registrado correctamente.')
-
-            # REPORTE A LA IA
-            if condicion_reportada:
-                try:
-                    payload_reporte = {
-                        "usuario_id_hash": f"user_{user.id}", 
-                        "modelo_id": motorcycle.model, 
-                        "componente_id": service_type, 
-                        "accion_realizada": "REEMPLAZAR", 
-                        "km_realizado_usuario": int(mileage_at_service), 
-                        "condicion_reportada": condicion_reportada
-                    }
-                    requests.post(f'{FLASK_API_URL}/reportar_mantenimiento', data=json.dumps(payload_reporte), headers={'Content-Type': 'application/json'}, auth=API_AUTH, timeout=4)
-                except Exception: pass
-            
+            msg_exito = 'Mantenimiento registrado.' if len(servicios_a_procesar) == 1 else f'{len(servicios_a_procesar)} servicios registrados.'
+            messages.success(request, msg_exito)
             return redirect('motodetails', moto_id=moto_id)
-        except Exception: 
+            
+        except Exception as e: 
+            print(e)
             messages.error(request, 'Ocurrió un error al guardar.')
-            return redirect('maintenance_add', moto_id=moto_id)
+            return redirect(f'/maintenance/{moto_id}/add?mode={mode}')
 
+    # GET: Cargar opciones
     opciones_mantenimiento = []
     try:
         response = requests.get(
@@ -433,8 +476,7 @@ def maintenance_add(request, moto_id):
         )
         if response.status_code == 200:
             opciones_mantenimiento = response.json()
-    except Exception:
-        pass
+    except Exception: pass
 
     if not opciones_mantenimiento:
         opciones_mantenimiento = [
@@ -449,6 +491,7 @@ def maintenance_add(request, moto_id):
     context = {
         'motorcycle': motorcycle,
         'service_options': opciones_mantenimiento,
+        'mode': mode, # Pasamos el modo al template
         'componente_preseleccionado': componente_preseleccionado
     }
     return render(request, 'maintenanceadd.html', context)

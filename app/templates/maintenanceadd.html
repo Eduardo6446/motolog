@@ -6,28 +6,75 @@
     <!-- Header -->
     <div class="pb-6 mb-6">
         <a href="{% url 'motodetails' moto_id=motorcycle.id %}" class="text-sm text-orange-400 hover:underline">&larr; Volver al Historial</a>
-        <h2 class="mt-2 text-3xl font-bold">Registrar Nuevo Mantenimiento</h2>
+        <h2 class="mt-2 text-3xl font-bold">
+            {% if mode == 'multiple' %}
+                Mantenimiento Múltiple
+            {% else %}
+                Registrar Nuevo Mantenimiento
+            {% endif %}
+        </h2>
         <p class="text-gray-400">Añade los detalles del servicio realizado a tu <span class="font-bold text-orange-400">{{ motorcycle.make }} {{ motorcycle.model }}</span>.</p>
     </div>
 
     <!-- Add Maintenance Form -->
-    <form action="{% url 'maintenance_add' moto_id=motorcycle.id %}" method="POST" class="p-6 space-y-6 bg-gray-800 rounded-xl border border-gray-700" id="maintenance-form">
+    <form action="{% url 'maintenance_add' moto_id=motorcycle.id %}?mode={{ mode }}" method="POST" class="p-6 space-y-6 bg-gray-800 rounded-xl border border-gray-700" id="maintenance-form">
         {% csrf_token %}
         <!-- Form Fields Grid -->
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <!-- Tipo de Servicio -->
+            
+            <!-- SELECCIÓN DE SERVICIOS (Lógica Híbrida) -->
             <div class="sm:col-span-2">
-                <label for="service-type" class="block text-sm font-medium text-gray-300">Tipo de Servicio</label>
-                <select id="service-type" name="service-type" required class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm">
-                    <option value="" disabled selected>Selecciona un servicio...</option>
-                    
-                    <!-- BUCLE DINÁMICO: Carga solo lo que la moto necesita (Backend V3) -->
-                    {% for opcion in service_options %}
-                        <option value="{{ opcion.id }}" {% if opcion.id == componente_preseleccionado %}selected{% endif %}>{{ opcion.label }}</option>
-                    {% endfor %}
-                    
-                </select>
-                <p class="mt-1 text-xs text-gray-500">Opciones personalizadas para tu modelo.</p>
+                <label class="block text-sm font-medium text-gray-300 mb-3">Servicios Realizados</label>
+                
+                {% if mode == 'multiple' %}
+                    <!-- MODO MÚLTIPLE: TARJETAS INTERACTIVAS (GRID) -->
+                    <!-- CAMBIO: Se eliminó max-h-80, overflow-y-auto y custom-scrollbar para que se expanda completo -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {% for opcion in service_options %}
+                        <div class="relative">
+                            <input class="sr-only peer" type="checkbox" name="service_types" id="service_{{ opcion.id }}" value="{{ opcion.id }}">
+                            <label for="service_{{ opcion.id }}" 
+                                   class="flex flex-col items-center justify-center p-3 text-center h-full min-h-[80px] text-gray-400 bg-gray-900/50 border border-gray-600 rounded-xl cursor-pointer hover:bg-gray-700 transition-all duration-200
+                                          peer-checked:border-orange-500 peer-checked:text-white peer-checked:bg-orange-500/10 peer-checked:shadow-[0_0_10px_rgba(249,115,22,0.3)]
+                                          peer-checked:[&>svg]:block peer-checked:[&>.default-icon]:hidden">
+                                <!-- Check Icon (Solo visible al seleccionar) -->
+                                <svg class="w-5 h-5 mb-1 text-orange-500 hidden animate-bounce-short" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                <!-- Default Icon (Opcional, punto simple si no está seleccionado) -->
+                                <div class="w-2 h-2 rounded-full bg-gray-600 mb-2 default-icon"></div>
+                                
+                                <span class="text-xs sm:text-sm font-medium leading-tight">{{ opcion.label }}</span>
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <p class="mt-3 text-xs text-orange-400 flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Toca las tarjetas para seleccionar los servicios.
+                    </p>
+                {% else %}
+                    <!-- MODO SINGLE: SELECT CLÁSICO (BLOQUEABLE) -->
+                    <select id="service-type" name="service-type" required 
+                        class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm 
+                        {% if componente_preseleccionado %} opacity-60 cursor-not-allowed bg-gray-800 {% endif %}"
+                        {% if componente_preseleccionado %} disabled {% endif %}>
+                        
+                        <option value="" disabled {% if not componente_preseleccionado %}selected{% endif %}>Selecciona un servicio...</option>
+                        {% for opcion in service_options %}
+                            <option value="{{ opcion.id }}" {% if opcion.id == componente_preseleccionado %}selected{% endif %}>{{ opcion.label }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <!-- LOGICA DE BLOQUEO: Si está disabled, el select no envía valor. Usamos un hidden. -->
+                    {% if componente_preseleccionado %}
+                        <input type="hidden" name="service-type" value="{{ componente_preseleccionado }}">
+                        <p class="mt-1 text-xs text-orange-400 flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                            Componente fijado. Para cambiar, usa el modo múltiple.
+                        </p>
+                    {% else %}
+                        <p class="mt-1 text-xs text-gray-500">Opciones personalizadas para tu modelo.</p>
+                    {% endif %}
+                {% endif %}
             </div>
 
             <!-- Fecha del Servicio (PRE-LLENADA CON HOY) -->
@@ -58,7 +105,7 @@
             <!-- FEEDBACK PARA LA IA -->
             <div class="sm:col-span-2 p-4 bg-gray-900/50 rounded-lg border border-gray-600 border-dashed">
                 <label class="block text-sm font-medium text-orange-400 mb-2">
-                    🤖 Ayuda a la IA: ¿En qué estado estaba la pieza?
+                    🤖 Ayuda a la IA: ¿En qué estado estaban las piezas?
                 </label>
                 <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
                     <!-- Opción 1: Como Nuevo -->
@@ -94,11 +141,14 @@
                         </label>
                     </div>
                 </div>
+                {% if mode == 'multiple' %}
+                <p class="mt-2 text-[10px] text-gray-500 text-center">* Se aplicará esta condición a todos los items seleccionados.</p>
+                {% endif %}
             </div>
 
             <!-- Costo (Opcional) -->
             <div class="sm:col-span-2">
-                <label for="cost" class="block text-sm font-medium text-gray-300">Costo (Opcional)</label>
+                <label for="cost" class="block text-sm font-medium text-gray-300">Costo Total (Opcional)</label>
                 <div class="relative mt-1 rounded-md shadow-sm">
                     <div class="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none">
                         <span class="text-gray-500 sm:text-sm">C$</span>
@@ -108,6 +158,9 @@
                         <span class="text-gray-500 sm:text-sm">NIO</span>
                     </div>
                 </div>
+                {% if mode == 'multiple' %}
+                <p class="mt-1 text-xs text-gray-500">El costo se dividirá equitativamente entre los servicios.</p>
+                {% endif %}
             </div>
 
             <!-- Notas Adicionales -->
@@ -160,8 +213,8 @@
                 </div>
 
                 <div id="date-field" class="hidden">
-                     <label for="next-service-date" class="block text-sm font-medium text-gray-300">Fecha del próximo servicio</label>
-                     <input type="date" name="next-service-date" id="next-service-date" form="maintenance-form" class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm" style="color-scheme: dark;">
+                      <label for="next-service-date" class="block text-sm font-medium text-gray-300">Fecha del próximo servicio</label>
+                      <input type="date" name="next-service-date" id="next-service-date" form="maintenance-form" class="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm" style="color-scheme: dark;">
                 </div>
             </div>
         </div>
@@ -189,15 +242,26 @@
         const distanceField = document.getElementById('distance-field');
         const dateField = document.getElementById('date-field');
 
-        // Open modal
+        // Open modal with validation
         openModalButton.addEventListener('click', function(event) {
             event.preventDefault();
-            // Basic validation
-            if(maintenanceForm.checkValidity()){
-                 modal.classList.remove('hidden');
-            } else {
-                 maintenanceForm.reportValidity();
+            
+            // Check HTML5 validity first
+            if(!maintenanceForm.checkValidity()){
+                maintenanceForm.reportValidity();
+                return;
             }
+
+            // Custom Check for Multiple Mode
+            {% if mode == 'multiple' %}
+            const checkboxes = document.querySelectorAll('input[name="service_types"]:checked');
+            if (checkboxes.length === 0) {
+                alert("Por favor selecciona al menos un servicio.");
+                return;
+            }
+            {% endif %}
+
+            modal.classList.remove('hidden');
         });
 
         // Close modal with X button
@@ -226,5 +290,16 @@
         });
     });
 </script>
+
+<style>
+    /* Animación personalizada para el ícono de check */
+    @keyframes bounce-short {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-3px); }
+    }
+    .animate-bounce-short {
+        animation: bounce-short 0.3s ease-in-out;
+    }
+</style>
 
 {% endblock %}
